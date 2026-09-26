@@ -1,0 +1,643 @@
+/* =========================================================
+   1. VARIABLES DE COLOR
+   Se definen una sola vez en :root (la raíz de la página)
+   y se reutilizan en todo el sistema con var(--nombre).
+   Si mañana cambiás un color, lo cambiás solo acá.
+   ========================================================= */
+:root {
+    --azul-oscuro: #12295b;   /* el azul del texto "Dentora" del logo */
+    --celeste: #1fb5d9;       /* el celeste de los detalles del logo */
+    --fondo: #eef3f8;         /* gris azulado muy suave para el fondo */
+    --blanco: #ffffff;
+    --texto: #333333;         /* gris oscuro: se lee mejor que el negro puro */
+    --error-fondo: #fdecea;   /* rojo muy clarito */
+    --error-texto: #b3261e;   /* rojo oscuro */
+}
+
+/* =========================================================
+   2. REGLAS GENERALES
+   ========================================================= */
+* {
+    box-sizing: border-box;
+    /* Hace que el ancho de un elemento INCLUYA su relleno y borde.
+       Sin esto, un input de 100% de ancho + relleno se sale de la tarjeta. */
+}
+
+body {
+    /* Lo que es común a TODAS las páginas */
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background-color: var(--fondo);
+    color: var(--texto);
+}
+
+.pagina-login {
+    /* El centrado ahora solo afecta al body que tenga class="pagina-login" */
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* =========================================================
+   3. LA TARJETA DEL LOGIN
+   ========================================================= */
+.contenedor-login {
+    /* El punto (.) indica que es una CLASE: se aplica al elemento con class="contenedor-login" */
+    background-color: var(--blanco);
+    width: 100%;
+    max-width: 380px;        /* en pantallas grandes no pasa de 380px; en celulares se achica sola */
+    padding: 32px;           /* espacio interno entre el borde de la tarjeta y su contenido */
+    border-radius: 12px;     /* esquinas redondeadas */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    /* Sombra suave: 0 horizontal, 4px hacia abajo, 20px de difuminado, negro al 8% de opacidad */
+    text-align: center;      /* centra el logo y el título */
+}
+
+.logo {
+    width: 160px;            /* soluciona el logo gigante */
+    margin-bottom: 8px;      /* espacio debajo del logo */
+    mix-blend-mode: multiply;   /* "funde" el fondo claro de la imagen con el blanco de la tarjeta */
+}
+
+h1 {
+    /* Sin punto: se aplica a TODAS las etiquetas <h1> */
+    color: var(--azul-oscuro);
+    font-size: 1.5rem;       /* rem = relativo al tamaño de letra base (1.5 veces) */
+    margin: 0 0 20px 0;      /* orden: arriba, derecha, abajo, izquierda */
+}
+
+/* =========================================================
+   4. MENSAJE DE ERROR
+   ========================================================= */
+.mensaje-error {
+    background-color: var(--error-fondo);
+    color: var(--error-texto);
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+}
+
+/* =========================================================
+   5. FORMULARIO
+   ========================================================= */
+form {
+    text-align: left;        /* los labels se leen mejor alineados a la izquierda */
+}
+
+label {
+    display: block;          /* por defecto el label va en la misma línea que el input;
+                                con block ocupa su propia línea y el campo queda debajo */
+    font-weight: 600;        /* semi negrita */
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+}
+
+input {
+    width: 100%;             /* el campo ocupa todo el ancho de la tarjeta */
+    padding: 10px 12px;      /* 10px arriba y abajo, 12px a los costados */
+    margin-bottom: 16px;
+    border: 1px solid #cccccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: inherit;       /* obliga a usar la misma tipografía que el resto de la página */
+}
+
+input:focus {
+    /* :focus = estilo mientras el usuario está escribiendo en ese campo */
+    outline: none;                       /* saca el contorno por defecto del navegador */
+    border-color: var(--celeste);
+    box-shadow: 0 0 0 3px rgba(31, 181, 217, 0.2);   /* halo celeste alrededor */
+}
+
+/* =========================================================
+   6. BOTÓN
+   ========================================================= */
+.contenedor-login button {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--azul-oscuro);
+    color: var(--blanco);
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;         /* muestra la manito al pasar el mouse */
+    transition: background-color 0.2s;  /* el cambio de color al pasar el mouse es suave, no brusco */
+    font-family: inherit;       /* obliga a usar la misma tipografía que el resto de la página */
+}
+
+.contenedor-login button:hover {
+    /* :hover = estilo mientras el mouse está encima */
+    background-color: var(--celeste);
+}
+
+
+/* =========================================================
+   7. ESTRUCTURA GENERAL DEL SISTEMA (menú + contenido)
+   ========================================================= */
+.layout {
+    display: flex;           /* menú y contenido uno al lado del otro */
+    min-height: 100vh;       /* ocupa como mínimo toda la altura de la ventana */
+}
+
+/* ---------- Menú lateral ---------- */
+.menu-lateral {
+    width: 220px;            /* ancho fijo del menú */
+    background-color: var(--azul-oscuro);
+    padding: 20px 0;         /* 20px arriba y abajo, 0 a los costados */
+}
+
+.logo-menu {
+    display: block;          /* necesario para poder centrarlo con margin auto */
+    width: 120px;
+    margin: 0 auto 24px;     /* arriba 0, costados auto (centra), abajo 24px */
+    background-color: var(--blanco);  /* recuadro blanco para que el logo resalte sobre el azul */
+    border-radius: 8px;
+    padding: 8px;
+}
+
+nav a {
+    /* Los enlaces que están dentro del <nav> */
+    display: block;          /* cada enlace ocupa su propia línea y todo el ancho del menú */
+    color: rgba(255, 255, 255, 0.85);  /* blanco apenas transparente */
+    text-decoration: none;   /* saca el subrayado típico de los enlaces */
+    padding: 12px 24px;
+}
+
+nav a:hover {
+    background-color: rgba(255, 255, 255, 0.1);  /* se aclara un poco al pasar el mouse */
+}
+
+nav a.activo {
+    /* Un <a> que además tenga class="activo" (sin espacio = el mismo elemento) */
+    background-color: var(--celeste);
+    color: var(--blanco);
+    font-weight: 600;
+}
+
+/* ---------- Columna de contenido ---------- */
+.contenido {
+    flex: 1;                 /* ocupa todo el espacio que el menú deja libre */
+}
+
+.barra-superior {
+    background-color: var(--blanco);
+    padding: 12px 32px;
+    display: flex;
+    justify-content: flex-end;   /* empuja todo hacia la derecha */
+    align-items: center;         /* alinea verticalmente el texto con el botón */
+    gap: 16px;                   /* espacio entre el nombre y el botón */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.boton-secundario {
+    /* Botón "liviano": solo borde, sin relleno de color */
+    background: none;
+    border: 1px solid var(--azul-oscuro);
+    color: var(--azul-oscuro);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.boton-secundario:hover {
+    background-color: var(--azul-oscuro);
+    color: var(--blanco);
+}
+
+.area-principal {
+    padding: 32px;           /* espacio entre el contenido y los bordes */
+}
+
+/* =========================================================
+   8. TARJETAS Y TABLAS (se reutilizan en todo el sistema)
+   ========================================================= */
+.tarjeta {
+    background-color: var(--blanco);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.tarjeta h2 {
+    margin-top: 0;
+    color: var(--azul-oscuro);
+    font-size: 1.1rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;   /* une los bordes de las celdas en una sola línea */
+}
+
+th, td {
+    /* La coma aplica la misma regla a los dos selectores */
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e5e5e5;   /* línea separadora entre filas */
+}
+
+th {
+    color: #666666;
+    font-size: 0.85rem;
+}
+
+/* ---------- Etiquetas de estado ("píldoras" de color) ---------- */
+.estado {
+    padding: 3px 10px;
+    border-radius: 12px;     /* bordes muy redondeados = forma de píldora */
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.estado-pendiente { background-color: #fff4e0; color: #a45d00; }   /* naranja */
+.estado-atendido  { background-color: #e3f6ea; color: #1e7b3c; }   /* verde */
+.estado-cancelado { background-color: #fdecea; color: #b3261e; }   /* rojo */
+
+
+/* =========================================================
+   9. BARRA DE ACCIONES Y BOTONES GENERALES
+   ========================================================= */
+.barra-acciones {
+    display: flex;
+    justify-content: space-between;  /* buscador a la izquierda, botón a la derecha */
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;                  /* si no hay espacio (pantalla chica), pasa a otra línea */
+}
+
+.buscador {
+    display: flex;                    /* input y botón uno al lado del otro */
+    gap: 8px;
+}
+
+.buscador input {
+    width: 280px;        /* pisa el width: 100% general de los inputs */
+    margin-bottom: 0;    /* pisa el margen de abajo, para que quede alineado con el botón */
+}
+
+.boton-principal {
+    /* Botón azul reutilizable en todo el sistema (sirve tanto para <button> como para <a>) */
+    display: inline-block;
+    background-color: var(--azul-oscuro);
+    color: var(--blanco);
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;   /* necesario cuando se usa en un <a> */
+    cursor: pointer;
+}
+
+.boton-principal:hover {
+    background-color: var(--celeste);
+}
+
+/* Botones chicos para las acciones de cada fila */
+.boton-chico {
+    display: inline-block;
+    padding: 4px 10px;
+    margin-right: 6px;
+    background: none;
+    border: 1px solid var(--azul-oscuro);
+    color: var(--azul-oscuro);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.8rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.boton-chico:hover {
+    background-color: var(--azul-oscuro);
+    color: var(--blanco);
+}
+
+/* Variante roja para acciones destructivas o delicadas */
+.boton-peligro {
+    border-color: var(--error-texto);
+    color: var(--error-texto);
+}
+
+.boton-peligro:hover {
+    background-color: var(--error-texto);
+    color: var(--blanco);
+}
+
+
+/* =========================================================
+   10. FORMULARIOS
+   ========================================================= */
+.tarjeta-form {
+    max-width: 800px;        /* el formulario no se estira en pantallas anchas */
+}
+
+select {
+    /* Las listas desplegables con el mismo aspecto que los inputs */
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    border: 1px solid #cccccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: inherit;
+    background-color: var(--blanco);
+}
+
+select:focus {
+    outline: none;
+    border-color: var(--celeste);
+    box-shadow: 0 0 0 3px rgba(31, 181, 217, 0.2);
+}
+
+fieldset {
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    padding: 16px 20px 4px;
+    margin: 0 0 20px 0;
+}
+
+legend {
+    color: var(--azul-oscuro);
+    font-weight: 600;
+    padding: 0 8px;          /* espacio a los costados del título sobre el borde */
+}
+
+.grilla-form {
+    display: grid;                          /* Grid: acomoda en filas y columnas */
+    grid-template-columns: repeat(2, 1fr);  /* 2 columnas de igual ancho (1fr = 1 fracción) */
+    column-gap: 20px;                       /* espacio entre columnas */
+}
+
+.campo-ancho {
+    grid-column: span 2;     /* esta celda ocupa las 2 columnas */
+}
+
+.nota {
+    font-size: 0.85rem;
+    color: #666666;
+}
+
+.botones-form {
+    display: flex;
+    justify-content: flex-end;   /* botones a la derecha */
+    gap: 12px;
+    margin-top: 20px;    /* separa los botones de lo que tengan arriba */
+}
+
+.botones-form .boton-secundario {
+    /* Agranda el botón secundario para que iguale al principal */
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    text-decoration: none;
+}
+
+
+/* =========================================================
+   11. AGENDA DE TURNOS
+   ========================================================= */
+.filtros {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.filtros select,
+.filtros input {
+    width: auto;         /* pisa el width: 100% general: cada filtro toma solo el ancho que necesita */
+    margin-bottom: 0;    /* alinea los filtros con el botón */
+}
+
+.fila-libre td {
+    color: #999999;      /* texto gris: se distingue de los turnos reales */
+    font-style: italic;
+    background-color: #f8fafc;
+}
+
+.fila-libre .boton-chico {
+    font-style: normal;   /* el botón no hereda la cursiva de la fila */
+}
+
+.sin-acciones {
+    color: #999999;
+}
+
+/* =========================================================
+   12. ODONTOGRAMA
+   ========================================================= */
+.ficha-paciente {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.odontograma {
+    overflow-x: auto;        /* en pantallas angostas, se puede desplazar de costado */
+}
+
+.arcada {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 16px;
+}
+
+.diente {
+    text-align: center;
+}
+
+.diente span {
+    display: block;
+    font-size: 0.75rem;
+    color: #666666;
+    margin-bottom: 2px;
+}
+
+.diente svg {
+    width: 36px;
+    height: 36px;
+}
+
+.linea-media {
+    width: 2px;
+    background-color: #cccccc;
+    margin: 0 8px;
+}
+
+/* Cada cara del diente. En SVG se usa fill (relleno) y stroke (borde) */
+.cara {
+    fill: var(--blanco);
+    stroke: #999999;
+    stroke-width: 1;
+    cursor: pointer;
+}
+
+.cara:hover {
+    fill: #e0f6fb;           /* celeste muy claro al pasar el mouse */
+}
+
+/* Colores según EstadoTratamiento (van después del hover para tener prioridad) */
+.cara.a-realizar { fill: #e53935; }   /* rojo */
+.cara.realizado  { fill: #1e5bd8; }   /* azul */
+
+.cara.seleccionada {
+    stroke: var(--celeste);
+    stroke-width: 3;         /* borde grueso celeste en la cara elegida */
+}
+
+/* Leyenda de colores */
+.leyenda {
+    display: flex;
+    gap: 20px;
+    font-size: 0.85rem;
+}
+
+.muestra {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 1px solid #999999;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+
+.muestra-a-realizar { background-color: #e53935; }
+.muestra-realizado  { background-color: #1e5bd8; }
+
+/* =========================================================
+   13. CONSULTA E HISTORIAL
+   ========================================================= */
+.tarjeta + .tarjeta {
+    /* Una tarjeta que viene justo después de otra: la separa 20px */
+    margin-top: 20px;
+}
+
+textarea {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    border: 1px solid #cccccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;        /* solo se puede agrandar hacia abajo, no de costado */
+}
+
+input[readonly] {
+    /* [readonly] = selector de atributo: inputs que tienen readonly */
+    background-color: #f5f7fa;
+    color: #555555;
+}
+
+h3 {
+    color: var(--azul-oscuro);
+    font-size: 1rem;
+    margin: 24px 0 8px;
+}
+
+#btn-agregar {
+    margin-bottom: 16px;
+}
+
+/* =========================================================
+   14. CONFIGURACIÓN: PESTAÑAS Y CATÁLOGOS
+   ========================================================= */
+.pestanas {
+    display: flex;
+    gap: 4px;
+    border-bottom: 2px solid #e5e5e5;
+    margin-bottom: 20px;
+}
+
+.pestana {
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;   /* línea invisible que se colorea al activarse */
+    margin-bottom: -2px;                     /* se superpone a la línea gris de .pestanas */
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: #666666;
+    cursor: pointer;
+}
+
+.pestana:hover {
+    color: var(--azul-oscuro);
+}
+
+.pestana.activa {
+    color: var(--azul-oscuro);
+    border-bottom-color: var(--celeste);
+    font-weight: 600;
+}
+
+.panel {
+    display: none;           /* todos los paneles ocultos... */
+}
+
+.panel.activa {
+    display: block;          /* ...menos el activo */
+}
+
+.select-corto {
+    width: auto;
+    min-width: 240px;
+}
+
+/* Catálogos: tarjetitas que se acomodan solas según el ancho disponible */
+.grilla-catalogos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    /* auto-fit + minmax: entran tantas columnas como quepan, cada una de al menos 280px */
+    gap: 20px;
+}
+
+.catalogo {
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.catalogo h3 {
+    margin-top: 0;
+}
+
+.lista-catalogo {
+    list-style: none;        /* saca los puntitos de la lista */
+    padding: 0;
+    margin: 0 0 12px 0;
+}
+
+.lista-catalogo li {
+    display: flex;
+    justify-content: space-between;   /* nombre a la izquierda, botón a la derecha */
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.fila-agregar {
+    display: flex;
+    gap: 8px;
+}
+
+.fila-agregar input {
+    margin-bottom: 0;
+    flex: 1;                 /* el campo ocupa el espacio que deja el botón */
+}
+
+.mensaje-exito {
+    background-color: #e3f6ea;
+    color: #1e7b3c;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+}
