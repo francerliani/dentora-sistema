@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dentora - Pacientes</title>
+    <link rel="stylesheet" href="css/estilos.css" />
+  </head>
+
+  <body>
+    <div class="layout">
+      <!-- ================= MENÚ LATERAL ================= -->
+      <aside class="menu-lateral">
+        <img src="img/logo.png" alt="Logo de Dentora" class="logo-menu" />
+
+        <nav>
+          <a href="/inicio">Inicio</a>
+
+          <!-- Visible para: Secretaria y Administrador -->
+          <a href="/pacientes" class="activo">Pacientes</a>
+
+          <!-- Visible para: Secretaria y Administrador -->
+          <a href="#">Turnos</a>
+
+          <!-- Visible para: Odontólogo y Administrador -->
+          <a href="#">Odontograma</a>
+
+          <!-- Visible para: solo Administrador -->
+          <a href="#">Configuración</a>
+        </nav>
+      </aside>
+
+      <!-- ================= CONTENIDO ================= -->
+      <div class="contenido">
+        <header class="barra-superior">
+          <span>Carlos Pérez — <strong>Administrador</strong></span>
+          <form action="/logout" method="post">
+            <button type="submit" class="boton-secundario">
+              Cerrar sesión
+            </button>
+          </form>
+        </header>
+
+        <main class="area-principal">
+          <h1>Pacientes</h1>
+
+          <section class="tarjeta">
+            <div class="barra-acciones">
+              <!-- Buscador a la izquierda, botón de alta a la derecha -->
+
+              <form class="buscador" action="/pacientes" method="get">
+                <!-- method="get": el texto buscado viaja en la dirección
+                                 (ej: /pacientes?buscar=gonzalez). No es secreto,
+                                 y así la búsqueda se puede recargar o compartir -->
+                <input
+                  type="text"
+                  name="buscar"
+                  th:value="${buscar}"
+                  placeholder="Buscar por DNI o apellido"
+                />
+                <button type="submit" class="boton-principal">Buscar</button>
+              </form>
+
+              <a href="#" class="boton-principal">+ Nuevo paciente</a>
+              <!-- Enlace con aspecto de botón: su función es IR a otra página.
+                             Regla práctica: si navega, es <a>; si ejecuta una acción, es <button> -->
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>DNI</th>
+                  <th>Apellido y nombre</th>
+                  <th>Teléfono</th>
+                  <th>Obra social</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Se repite una fila por cada paciente que mandó el controlador -->
+                <tr th:each="p : ${pacientes}">
+                  <td th:text="${p.dni}">30111222</td>
+                  <td th:text="|${p.apellido}, ${p.nombre}|">
+                    González, María
+                  </td>
+                  <td th:text="${p.telefono}">342-555555</td>
+                  <!-- Si no tiene obra social (null), muestra "Particular" -->
+                  <td
+                    th:text="${p.obraSocial != null} ? ${p.obraSocial.nombre} : 'Particular'"
+                  >
+                    OSDE
+                  </td>
+                  <td>
+                    <a href="#" class="boton-chico">Editar</a>
+                    <button type="button" class="boton-chico boton-peligro">
+                      Dar de baja
+                    </button>
+                  </td>
+                </tr>
+
+                <!-- Solo aparece si la lista vino vacía -->
+                <tr th:if="${#lists.isEmpty(pacientes)}">
+                  <td colspan="5">No se encontraron pacientes.</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

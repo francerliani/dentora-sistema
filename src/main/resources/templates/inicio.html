@@ -22,7 +22,7 @@
                 <a href="/inicio" class="activo">Inicio</a>
 
                 <!-- Secretaria y Administrador -->
-                <a href="#" th:if="${rol == 'SECRETARIA' or rol == 'ADMINISTRADOR'}">Pacientes</a>
+                <a href="/pacientes" th:if="${rol == 'SECRETARIA' or rol == 'ADMINISTRADOR'}">Pacientes</a>
 
                 <!-- Secretaria y Administrador -->
                 <a href="#" th:if="${rol == 'SECRETARIA' or rol == 'ADMINISTRADOR'}">Turnos</a>
