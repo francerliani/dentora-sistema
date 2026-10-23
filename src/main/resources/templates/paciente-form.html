@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dentora - Paciente</title>
+    <!-- CAMBIO: rutas con "/" adelante, porque Spring sirve los archivos desde static -->
+    <link rel="stylesheet" href="/css/estilos.css">
+</head>
+
+<body>
+    <div class="layout">
+
+        <aside class="menu-lateral">
+            <img src="/img/logo.png" alt="Logo de Dentora" class="logo-menu">
+            <nav>
+                <a href="/inicio">Inicio</a>
+                <a href="/pacientes" class="activo">Pacientes</a>
+                <a href="#">Turnos</a>
+                <a href="#">Odontograma</a>
+                <a href="#">Configuración</a>
+            </nav>
+        </aside>
+
+        <div class="contenido">
+
+            <header class="barra-superior">
+                <span>Carlos Pérez — <strong>Administrador</strong></span>
+                <!-- CAMBIO: th:action agrega el token de seguridad (CSRF) que exige el logout -->
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="boton-secundario">Cerrar sesión</button>
+                </form>
+            </header>
+
+            <main class="area-principal">
+                <!-- CAMBIO: si el paciente no tiene id, es nuevo; si tiene, se está editando -->
+                <h1 th:text="${paciente.idPaciente == null} ? 'Nuevo paciente' : 'Editar paciente'">Nuevo paciente</h1>
+                
+                <!-- Solo aparece si el controlador mandó un error (ej: DNI repetido) -->
+                <p class="mensaje-error" th:if="${error}" th:text="${error}">Error</p>
+
+                <section class="tarjeta tarjeta-form">
+
+                    <!-- CAMBIO: th:object conecta el formulario con el objeto "paciente" del controlador.
+                         Adentro, *{campo} significa "el campo de ese paciente" -->
+                    <form th:action="@{/pacientes/guardar}" th:object="${paciente}" method="post">
+
+                        <input type="hidden" th:field="*{idPaciente}">
+
+                        <fieldset>
+                            <legend>Datos personales</legend>
+                            <div class="grilla-form">
+
+                                <div>
+                                    <label for="nombre">Nombre *</label>
+                                    <!-- th:field completa solo el id, el name y el value -->
+                                    <input type="text" th:field="*{nombre}" required>
+                                </div>
+
+                                <div>
+                                    <label for="apellido">Apellido *</label>
+                                    <input type="text" th:field="*{apellido}" required>
+                                </div>
+
+                                <div>
+                                    <label for="dni">DNI *</label>
+                                    <input type="text" th:field="*{dni}" placeholder="Sin puntos" required>
+                                </div>
+
+                                <div>
+                                    <label for="fechaNacimiento">Fecha de nacimiento</label>
+                                    
+                                    <input type="date" th:field="*{fechaNacimiento}"
+                                    min="1900-01-01"
+                                      th:max="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}">
+                                    <!-- min y max: el navegador no deja guardar fechas fuera de ese rango
+                                                 (ni años de 5 dígitos, ni fechas futuras) -->
+                                </div>
+
+                                <div>
+                                    <label for="sexo">Sexo</label>
+                                    <!-- CAMBIO: las opciones salen de la base con th:each -->
+                                    <select id="sexo" name="sexo">
+                                        <option value="">Seleccionar...</option>
+                                        <option th:each="s : ${sexos}"
+                                                th:value="${s.idSexo}"
+                                                th:text="${s.nombre}"
+                                                th:selected="${paciente.sexo != null and paciente.sexo.idSexo == s.idSexo}">
+                                            Femenino
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label for="telefono">Teléfono</label>
+                                    <input type="tel" th:field="*{telefono}">
+                                </div>
+
+                                <div>
+                                    <label for="obraSocial">Obra social</label>
+                                    <select id="obraSocial" name="obraSocial">
+                                        <option value="">Particular (sin obra social)</option>
+                                        <option th:each="o : ${obrasSociales}"
+                                                th:value="${o.idObraSocial}"
+                                                th:text="${o.nombre}"
+                                                th:selected="${paciente.obraSocial != null and paciente.obraSocial.idObraSocial == o.idObraSocial}">
+                                            OSDE
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <fieldset>
+                            <legend>Dirección</legend>
+                            <div class="grilla-form">
+                                <div class="campo-ancho">
+                                    <label for="direccion.calle">Calle</label>
+                                    <!-- *{direccion.calle} = la calle de la dirección del paciente -->
+                                    <input type="text" th:field="*{direccion.calle}">
+                                </div>
+                                <div>
+                                    <label for="direccion.numero">Número</label>
+                                    <input type="number" th:field="*{direccion.numero}">
+                                </div>
+                                <div>
+                                    <label for="direccion.ciudad">Ciudad</label>
+                                    <input type="text" th:field="*{direccion.ciudad}">
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <p class="nota">* Campos obligatorios</p>
+
+                        <div class="botones-form">
+                            <a href="/pacientes" class="boton-secundario">Cancelar</a>
+                            <button type="submit" class="boton-principal">Guardar paciente</button>
+                        </div>
+
+                    </form>
+                </section>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

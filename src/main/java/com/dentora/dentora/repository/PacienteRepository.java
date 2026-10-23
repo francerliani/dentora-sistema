@@ -26,4 +26,10 @@ List<Paciente> findByActivoTrue();
        "(p.dni LIKE CONCAT('%', :texto, '%') OR " +
        "LOWER(p.apellido) LIKE LOWER(CONCAT('%', :texto, '%')))")
 List<Paciente> buscar(@Param("texto") String texto);
+
+// ¿Existe algún paciente con este DNI? (para el alta)
+boolean existsByDni(String dni);
+
+// ¿Existe OTRO paciente con este DNI, sin contar a este mismo? (para editar, más adelante)
+boolean existsByDniAndIdPacienteNot(String dni, Integer idPaciente);
 }

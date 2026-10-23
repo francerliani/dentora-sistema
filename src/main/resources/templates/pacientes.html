@@ -34,7 +34,7 @@
       <div class="contenido">
         <header class="barra-superior">
           <span>Carlos Pérez — <strong>Administrador</strong></span>
-          <form action="/logout" method="post">
+          <form th:action="@{/logout}" method="post">
             <button type="submit" class="boton-secundario">
               Cerrar sesión
             </button>
@@ -44,6 +44,8 @@
         <main class="area-principal">
           <h1>Pacientes</h1>
 
+            <!-- Aparece una sola vez, después de guardar -->
+            <p class="mensaje-exito" th:if="${mensaje}" th:text="${mensaje}">Guardado</p>
           <section class="tarjeta">
             <div class="barra-acciones">
               <!-- Buscador a la izquierda, botón de alta a la derecha -->
@@ -61,7 +63,8 @@
                 <button type="submit" class="boton-principal">Buscar</button>
               </form>
 
-              <a href="#" class="boton-principal">+ Nuevo paciente</a>
+              <a href="/pacientes/nuevo" class="boton-principal">+ Nuevo paciente</a>
+              
               <!-- Enlace con aspecto de botón: su función es IR a otra página.
                              Regla práctica: si navega, es <a>; si ejecuta una acción, es <button> -->
             </div>
