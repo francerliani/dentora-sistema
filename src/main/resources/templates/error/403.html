@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Dentora - Acceso denegado</title>
+    <link rel="stylesheet" href="/css/estilos.css">
+</head>
+<body>
+    <!-- Spring Boot muestra este archivo automáticamente cuando hay un error 403,
+         porque está en templates/error/ y se llama igual que el código del error -->
+    <main class="area-principal" style="text-align:center; padding-top:80px;">
+        <img src="/img/logo.png" alt="Logo de Dentora" style="width:120px;">
+        <h1>Acceso denegado</h1>
+        <p>Tu rol no tiene permiso para ver esta sección.</p>
+        <a href="/inicio" class="boton-principal">Volver al inicio</a>
+    </main>
+</body>
+</html>
