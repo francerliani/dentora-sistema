@@ -1,44 +1,56 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-<!-- xmlns:th habilita los atributos th:... de Thymeleaf -->
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- xmlns:th habilita los atributos th:... de Thymeleaf -->
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dentora - Iniciar sesión</title>
-    <link rel="stylesheet" th:href="@{/css/estilos.css}">
-</head>
+    <link rel="stylesheet" th:href="@{/css/estilos.css}" />
+  </head>
 
-<body class="pagina-login">
-
+  <body class="pagina-login">
     <main class="contenedor-login">
+      <img th:src="@{/img/logo.png}" alt="Logo de Dentora" class="logo" />
 
-        <img th:src="@{/img/logo.png}" alt="Logo de Dentora" class="logo">
+      <h1>Iniciar sesión</h1>
 
-        <h1>Iniciar sesión</h1>
+      <!-- Solo aparece si el login falló (Spring redirige a /login?error) -->
+      <div class="mensaje-error" th:if="${param.error}">
+        Usuario o contraseña incorrectos.
+      </div>
 
-        <!-- Solo aparece si el login falló (Spring redirige a /login?error) -->
-        <div class="mensaje-error" th:if="${param.error}">
-            Usuario o contraseña incorrectos.
-        </div>
+      <!-- NUEVO: solo aparece si la cuenta está bloqueada (redirige a /login?bloqueado) -->
+      <div class="mensaje-error" th:if="${param.bloqueado}">
+        Cuenta bloqueada por 5 intentos fallidos. Contacte al administrador.
+      </div>
 
-        <!-- Solo aparece después de cerrar sesión (Spring redirige a /login?logout) -->
-        <div class="mensaje-exito" th:if="${param.logout}">
-            Cerraste sesión correctamente.
-        </div>
+      <!-- Solo aparece después de cerrar sesión (Spring redirige a /login?logout) -->
+      <div class="mensaje-exito" th:if="${param.logout}">
+        Cerraste sesión correctamente.
+      </div>
 
-        <!-- th:action (no action): Thymeleaf agrega solo el token CSRF oculto -->
-        <form th:action="@{/login}" method="post">
+      <!-- th:action (no action): Thymeleaf agrega solo el token CSRF oculto -->
+      <form th:action="@{/login}" method="post">
+        <label for="username">Usuario</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          placeholder="Ingresá tu usuario"
+          required
+        />
 
-            <label for="username">Usuario</label>
-            <input type="text" id="username" name="username" placeholder="Ingresá tu usuario" required>
+        <label for="password">Contraseña</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Ingresá tu contraseña"
+          required
+        />
 
-            <label for="password">Contraseña</label>
-            <input type="password" id="password" name="password" placeholder="Ingresá tu contraseña" required>
-
-            <button type="submit">Ingresar</button>
-        </form>
-
+        <button type="submit">Ingresar</button>
+      </form>
     </main>
-
-</body>
+  </body>
 </html>

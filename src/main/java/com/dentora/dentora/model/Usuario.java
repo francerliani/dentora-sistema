@@ -29,6 +29,11 @@ public class Usuario {
     private Boolean activo = true;
     // El atributo nuevo del diagrama. Por defecto, todo usuario nuevo está activo
 
+    // Cantidad de contraseñas incorrectas seguidas. Al llegar a 5, la cuenta se bloquea.
+    // "default 0" hace que los usuarios que ya existen en la base arranquen en 0
+    @Column(name = "intentos_fallidos", columnDefinition = "integer not null default 0")
+    private int intentosFallidos = 0;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_rol", nullable = false)
     private Rol rol;
@@ -96,4 +101,7 @@ public class Usuario {
     public void setRol(Rol rol) {
         this.rol = rol;
     }
+
+    public int getIntentosFallidos() { return intentosFallidos; }
+    public void setIntentosFallidos(int intentosFallidos) { this.intentosFallidos = intentosFallidos; }
 }

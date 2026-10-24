@@ -31,10 +31,12 @@ public class UsuarioDetailsService implements UserDetailsService {
 
         // 2. Convertir NUESTRO Usuario al formato que entiende Spring Security (UserDetails)
         return User.builder()
+                        
                 .username(usuario.getUsuario())
                 .password(usuario.getContrasena())      // la encriptada; Spring la compara con BCrypt
                 .roles(usuario.getRol().getNombre())    // ej: "SECRETARIA" -> Spring la guarda como "ROLE_SECRETARIA"
-                .disabled(!usuario.getActivo())         // si activo = false, la cuenta queda bloqueada
+                .disabled(!usuario.getActivo())         // si activo = false, la cuenta está dada de baja
+                .accountLocked(usuario.getIntentosFallidos() >= 5) // NUEVO: 5 o más fallos seguidos = bloqueada
                 .build();
     }
 }

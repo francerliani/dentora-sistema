@@ -2,6 +2,7 @@ package com.dentora.dentora.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -38,8 +39,16 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 // 2. El LOGIN
                 .formLogin(form -> form
-                        .loginPage("/login") // usar TU pantalla, no la de Spring
-                        .defaultSuccessUrl("/inicio", true) // si el login sale bien, ir a /inicio
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/inicio", true)
+                        // NUEVO: decide a dónde volver cuando el login falla
+                        .failureHandler((request, response, exception) -> {
+                            if (exception instanceof LockedException) {
+                                response.sendRedirect("/login?bloqueado"); // cuenta bloqueada
+                            } else {
+                                response.sendRedirect("/login?error"); // usuario o contraseña incorrectos
+                            }
+                        })
                         .permitAll())
                 // 3. El CIERRE DE SESIÓN
                 .logout(logout -> logout
