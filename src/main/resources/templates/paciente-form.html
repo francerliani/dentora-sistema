@@ -113,6 +113,9 @@
 
                         <fieldset>
                             <legend>Dirección</legend>
+                            <!-- Id oculto de la dirección: al editar, actualiza la MISMA dirección
+                                en vez de crear una nueva en la base -->
+                                <input type="hidden" th:field="*{direccion.idDireccion}">
                             <div class="grilla-form">
                                 <div class="campo-ancho">
                                     <label for="direccion.calle">Calle</label>
