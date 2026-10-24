@@ -102,6 +102,24 @@ public class PacienteController {
         return "redirect:/pacientes";
     }
 
+    // ===== DAR DE BAJA (baja lógica) =====
+// Es POST y no GET porque MODIFICA datos: así nadie da de baja
+// a un paciente solo por abrir un link
+@PostMapping("/pacientes/baja/{id}")
+public String darDeBaja(@PathVariable Integer id, RedirectAttributes redirect) {
+
+    Paciente paciente = pacienteRepository.findById(id).orElse(null);
+
+    if (paciente != null) {
+        paciente.setActivo(false);          // no se borra, se desactiva
+        pacienteRepository.save(paciente);  // UPDATE en la base
+        redirect.addFlashAttribute("mensaje",
+                "Paciente " + paciente.getApellido() + ", " + paciente.getNombre() + " dado de baja.");
+    }
+
+    return "redirect:/pacientes";
+}
+
     // Manda a la página las listas para los dos <select>
     private void cargarCatalogos(Model model) {
         model.addAttribute("sexos", sexoRepository.findAll());
