@@ -152,4 +152,25 @@ public class AgendaService {
             case SUNDAY    -> "DOMINGO";
         };
     }
+
+        // =========================================================
+    // NUEVO: buscar un turno por id (para reprogramar)
+    // =========================================================
+    public Turno buscarTurno(Integer idTurno) {
+        return turnoRepository.findById(idTurno).orElse(null);
+    }
+
+    // =========================================================
+    // NUEVO: CANCELAR (no se borra: cambia el estado, RN-10)
+    // Solo se cancelan los Pendientes. Devuelve el turno para saber a qué agenda volver
+    // =========================================================
+    public Turno cancelarTurno(Integer idTurno) {
+        Turno turno = turnoRepository.findById(idTurno).orElse(null);
+
+        if (turno != null && turno.getEstado().getNombre().equals("Pendiente")) {
+            turno.setEstado(estadoTurnoRepository.findByNombre("Cancelado").orElseThrow());
+            turnoRepository.save(turno);
+        }
+        return turno;
+    }
 }

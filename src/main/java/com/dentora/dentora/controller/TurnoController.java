@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -115,7 +116,39 @@ public class TurnoController {
         return "redirect:/turnos?idOdontologo=" + turno.getOdontologo().getIdUsuario()
                 + "&fecha=" + turno.getFecha();
     }
+            // ===== NUEVO: REPROGRAMAR = abrir el formulario con los datos del turno =====
+    @GetMapping("/turnos/reprogramar/{id}")
+    public String reprogramar(@PathVariable Integer id, Model model) {
+        Turno turno = agendaService.buscarTurno(id);
+        if (turno == null) {
+            return "redirect:/turnos";
+        }
 
+        // Armamos el texto del buscador igual que en las sugerencias: "DNI - Apellido, Nombre"
+        Paciente p = turno.getPaciente();
+        model.addAttribute("textoPaciente", p.getDni() + " - " + p.getApellido() + ", " + p.getNombre());
+
+        model.addAttribute("turno", turno);
+        cargarListasFormulario(model);
+        return "turno-form";   // el MISMO formulario del alta
+    }
+
+    // ===== NUEVO: CANCELAR =====
+    // POST porque modifica datos (igual que "Dar de baja" en pacientes)
+    @PostMapping("/turnos/cancelar/{id}")
+    public String cancelar(@PathVariable Integer id, RedirectAttributes redirect) {
+        Turno turno = agendaService.cancelarTurno(id);
+        if (turno == null) {
+            return "redirect:/turnos";
+        }
+
+        redirect.addFlashAttribute("mensaje", "Turno de " + turno.getPaciente().getApellido()
+                + " cancelado. El horario quedó libre.");
+
+        // Volvemos a la agenda del mismo odontólogo y el mismo día
+        return "redirect:/turnos?idOdontologo=" + turno.getOdontologo().getIdUsuario()
+                + "&fecha=" + turno.getFecha();
+    }
     // Listas para los desplegables del formulario
     private void cargarListasFormulario(Model model) {
         model.addAttribute("pacientes", pacienteRepository.findByActivoTrue());   // solo activos (RN-05)

@@ -113,6 +113,14 @@
 
                     <!-- Solo los Pendientes se pueden reprogramar o cancelar -->
                     <td th:if="${f.turno.estado.nombre == 'Pendiente'}">
+            <a th:href="@{/turnos/reprogramar/{id}(id=${f.turno.idTurno})}" class="boton-chico">Reprogramar</a>
+
+                <!-- Formulario chiquito POST, con confirmación (igual que Dar de baja) -->
+                    <form th:action="@{/turnos/cancelar/{id}(id=${f.turno.idTurno})}" method="post" style="display:inline">
+                    <button type="submit" class="boton-chico boton-peligro"
+                        onclick="return confirm('¿Cancelar este turno?')">Cancelar</button>
+                    </form>
+                    </td>
                       <a href="#" class="boton-chico">Reprogramar</a>
                       <button type="button" class="boton-chico boton-peligro">Cancelar</button>
                     </td>
