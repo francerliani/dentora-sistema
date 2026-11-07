@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dentora - Turnos</title>
+    <!-- CAMBIO: rutas con "/" adelante -->
+    <link rel="stylesheet" href="/css/estilos.css" />
+  </head>
+
+  <body>
+    <div class="layout">
+      <aside class="menu-lateral">
+        <img src="/img/logo.png" alt="Logo de Dentora" class="logo-menu" />
+        <nav>
+          <a href="/inicio">Inicio</a>
+          <a href="/pacientes">Pacientes</a>
+          <a href="/turnos" class="activo">Turnos</a>
+          <a href="#">Odontograma</a>
+          <a href="#">Configuración</a>
+        </nav>
+      </aside>
+
+      <div class="contenido">
+        <header class="barra-superior">
+          <span>Carlos Pérez — <strong>Administrador</strong></span>
+          <!-- CAMBIO: th:action para el token de seguridad del logout -->
+          <form th:action="@{/logout}" method="post">
+            <button type="submit" class="boton-secundario">Cerrar sesión</button>
+          </form>
+        </header>
+
+        <main class="area-principal">
+          <h1>Agenda de turnos</h1>
+
+          <section class="tarjeta">
+            <div class="barra-acciones">
+              <form class="filtros" action="/turnos" method="get">
+
+                <!-- CAMBIO: los odontólogos salen de la base.
+                     Sacamos "Todos": la agenda se arma de a un odontólogo -->
+                <select name="idOdontologo">
+                  <option th:each="o : ${odontologos}"
+                          th:value="${o.idUsuario}"
+                          th:text="${o.nombre}"
+                          th:selected="${odontologo != null and o.idUsuario == odontologo.idUsuario}">
+                    Juan Gaite
+                  </option>
+                </select>
+
+                <!-- CAMBIO: muestra la fecha que se está viendo -->
+                <input type="date" name="fecha" th:value="${fecha}" />
+
+                <button type="submit" class="boton-principal">Ver agenda</button>
+              </form>
+
+              <!-- Se conecta en la Parte 3 -->
+              <a href="#" class="boton-principal">+ Nuevo turno</a>
+            </div>
+
+            <!-- CAMBIO: si ese día no tiene franjas, mostramos un aviso en vez de la tabla -->
+            <p th:if="${filas == null or #lists.isEmpty(filas)}">
+              El odontólogo no atiende ese día.
+            </p>
+
+            <table th:unless="${filas == null or #lists.isEmpty(filas)}">
+              <thead>
+                <tr>
+                  <th>Hora</th>
+                  <th>Duración</th>
+                  <th>Paciente</th>
+                  <th>Odontólogo</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- CAMBIO: una fila por cada renglón que armó AgendaService.
+                     th:block no dibuja nada: solo agrupa las dos opciones (libre / turno) -->
+                <th:block th:each="f : ${filas}">
+
+                  <!-- ===== BLOQUE LIBRE ===== -->
+                  <tr th:if="${f.libre}" class="fila-libre">
+                    <td th:text="${#temporals.format(f.hora, 'HH:mm')}">18:00</td>
+                    <td>—</td>
+                    <td>Horario disponible</td>
+                    <td th:text="${odontologo.nombre}">Juan Gaite</td>
+                    <td>—</td>
+                    <td>
+                      <!-- Se conecta en la Parte 3 -->
+                      <a href="#" class="boton-chico">Asignar</a>
+                    </td>
+                  </tr>
+
+                  <!-- ===== TURNO ===== -->
+                  <tr th:unless="${f.libre}">
+                    <!-- Si dura más de 1 hora, se muestra el rango: 16:00 – 18:00 -->
+                    <td th:text="${f.turno.duracionHoras > 1}
+                                 ? ${#temporals.format(f.hora, 'HH:mm') + ' – ' + #temporals.format(f.horaFin, 'HH:mm')}
+                                 : ${#temporals.format(f.hora, 'HH:mm')}">15:00</td>
+                    <td th:text="|${f.turno.duracionHoras} h|">1 h</td>
+                    <td th:text="|${f.turno.paciente.apellido}, ${f.turno.paciente.nombre}|">González, María</td>
+                    <td th:text="${odontologo.nombre}">Juan Gaite</td>
+                    <td>
+                      <!-- La clase del color sale del nombre del estado:
+                           Pendiente → estado-pendiente, Atendido → estado-atendido -->
+                      <span class="estado"
+                            th:classappend="${'estado-' + #strings.toLowerCase(f.turno.estado.nombre)}"
+                            th:text="${f.turno.estado.nombre}">Pendiente</span>
+                    </td>
+
+                    <!-- Solo los Pendientes se pueden reprogramar o cancelar -->
+                    <td th:if="${f.turno.estado.nombre == 'Pendiente'}">
+                      <a href="#" class="boton-chico">Reprogramar</a>
+                      <button type="button" class="boton-chico boton-peligro">Cancelar</button>
+                    </td>
+                    <td th:unless="${f.turno.estado.nombre == 'Pendiente'}" class="sin-acciones">—</td>
+                  </tr>
+
+                </th:block>
+              </tbody>
+            </table>
+          </section>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>
