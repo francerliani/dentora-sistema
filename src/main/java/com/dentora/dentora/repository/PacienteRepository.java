@@ -3,7 +3,7 @@ package com.dentora.dentora.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
+import java.util.Optional;
 import com.dentora.dentora.model.Paciente;
 import java.util.List;
 
@@ -32,4 +32,7 @@ boolean existsByDni(String dni);
 
 // ¿Existe OTRO paciente con este DNI, sin contar a este mismo? (para editar, más adelante)
 boolean existsByDniAndIdPacienteNot(String dni, Integer idPaciente);
+
+// Buscar un paciente por DNI exacto (lo usa el formulario de turnos)
+Optional<Paciente> findByDni(String dni);
 }

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dentora - Nuevo turno</title>
+    <link rel="stylesheet" href="/css/estilos.css" />
+  </head>
+
+  <body>
+    <div class="layout">
+      <aside class="menu-lateral">
+        <img src="/img/logo.png" alt="Logo de Dentora" class="logo-menu" />
+        <nav>
+          <a href="/inicio">Inicio</a>
+          <a href="/pacientes">Pacientes</a>
+          <a href="/turnos" class="activo">Turnos</a>
+          <a href="#">Odontograma</a>
+          <a href="#">Configuración</a>
+        </nav>
+      </aside>
+
+      <div class="contenido">
+        <header class="barra-superior">
+          <span>Carlos Pérez — <strong>Administrador</strong></span>
+          <form th:action="@{/logout}" method="post">
+            <button type="submit" class="boton-secundario">Cerrar sesión</button>
+          </form>
+        </header>
+
+        <main class="area-principal">
+          <!-- CAMBIO: sin id = turno nuevo; con id = reprogramación -->
+          <h1 th:text="${turno.idTurno == null} ? 'Nuevo turno' : 'Reprogramar turno'">Nuevo turno</h1>
+
+          <!-- CAMBIO: mensaje de error de las validaciones -->
+          <div class="mensaje-error" th:if="${error}" th:text="${error}">Error</div>
+
+          <section class="tarjeta tarjeta-form">
+            <!-- CAMBIO: th:object conecta el formulario con el objeto "turno" -->
+            <form th:action="@{/turnos/guardar}" th:object="${turno}" method="post">
+
+              <input type="hidden" th:field="*{idTurno}" />
+
+              <!-- ========== PACIENTE ========== -->
+              <fieldset>
+                <legend>Paciente</legend>
+
+                <label for="textoPaciente">Buscar paciente *</label>
+                <!-- CAMBIO: name="textoPaciente" (no es un campo de Turno:
+                     el controlador lo recibe aparte y busca el paciente por DNI) -->
+                <input type="text" id="textoPaciente" name="textoPaciente"
+                       th:value="${textoPaciente}"
+                       list="lista-pacientes"
+                       placeholder="Escribí el DNI o el apellido" required />
+
+                <!-- CAMBIO: las sugerencias salen de los pacientes activos de la base -->
+                <datalist id="lista-pacientes">
+                  <option th:each="p : ${pacientes}"
+                          th:value="|${p.dni} - ${p.apellido}, ${p.nombre}|"></option>
+                </datalist>
+
+                <p class="nota">
+                  ¿Es un paciente nuevo?
+                  <a href="/pacientes/nuevo">Registrarlo primero</a>
+                </p>
+              </fieldset>
+
+              <!-- ========== DATOS DEL TURNO ========== -->
+              <fieldset>
+                <legend>Datos del turno</legend>
+
+                <div class="grilla-form">
+                  <div class="campo-ancho">
+                    <label for="odontologo">Odontólogo *</label>
+                    <!-- CAMBIO: name="odontologo" con el id; Spring busca el Usuario solo -->
+                    <select id="odontologo" name="odontologo" required>
+                      <option value="">Seleccionar...</option>
+                      <option th:each="o : ${odontologos}"
+                              th:value="${o.idUsuario}"
+                              th:text="${o.nombre}"
+                              th:selected="${turno.odontologo != null and turno.odontologo.idUsuario == o.idUsuario}">
+                        Juan Gaite
+                      </option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label for="fecha">Fecha *</label>
+                    <!-- min = hoy: el calendario no deja elegir fechas pasadas -->
+                    <input type="date" th:field="*{fecha}" required
+                           th:min="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}" />
+                  </div>
+
+                  <div>
+                    <label for="hora">Hora *</label>
+                    <!-- CAMBIO: horas en punto generadas por el controlador -->
+                    <select id="hora" name="hora" required>
+                      <option value="">Seleccionar...</option>
+                      <option th:each="h : ${horas}"
+                              th:value="${#temporals.format(h, 'HH:mm')}"
+                              th:text="${#temporals.format(h, 'HH:mm')}"
+                              th:selected="${turno.hora != null and turno.hora == h}">
+                        09:00
+                      </option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label for="duracionHoras">Duración *</label>
+                    <!-- th:field marca sola la opción que coincide con duracionHoras (1 por defecto) -->
+                    <select th:field="*{duracionHoras}" required>
+                      <option value="1">1 hora</option>
+                      <option value="2">2 horas</option>
+                      <option value="3">3 horas</option>
+                      <option value="4">4 horas</option>
+                    </select>
+                  </div>
+                </div>
+
+                <p class="nota">
+                  Los horarios disponibles dependen de la agenda del odontólogo y de la fecha elegida.
+                </p>
+              </fieldset>
+
+              <p class="nota">* Campos obligatorios</p>
+
+              <div class="botones-form">
+                <a href="/turnos" class="boton-secundario">Cancelar</a>
+                <button type="submit" class="boton-principal">Guardar turno</button>
+              </div>
+            </form>
+          </section>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

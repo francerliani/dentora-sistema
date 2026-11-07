@@ -32,7 +32,7 @@
 
         <main class="area-principal">
           <h1>Agenda de turnos</h1>
-
+            <p class="mensaje-exito" th:if="${mensaje}" th:text="${mensaje}">Guardado</p>
           <section class="tarjeta">
             <div class="barra-acciones">
               <form class="filtros" action="/turnos" method="get">
@@ -55,7 +55,8 @@
               </form>
 
               <!-- Se conecta en la Parte 3 -->
-              <a href="#" class="boton-principal">+ Nuevo turno</a>
+              <a th:href="@{/turnos/nuevo(idOdontologo=${odontologo?.idUsuario}, fecha=${fecha})}"
+                class="boton-principal">+ Nuevo turno</a>
             </div>
 
             <!-- CAMBIO: si ese día no tiene franjas, mostramos un aviso en vez de la tabla -->
@@ -88,7 +89,8 @@
                     <td>—</td>
                     <td>
                       <!-- Se conecta en la Parte 3 -->
-                      <a href="#" class="boton-chico">Asignar</a>
+                      <a th:href="@{/turnos/nuevo(idOdontologo=${odontologo.idUsuario}, fecha=${fecha}, hora=${#temporals.format(f.hora, 'HH:mm')})}"
+                     class="boton-chico">Asignar</a>
                     </td>
                   </tr>
 
