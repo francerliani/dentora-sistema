@@ -28,7 +28,7 @@
                 <a href="/turnos" th:if="${rol == 'SECRETARIA' or rol == 'ADMINISTRADOR'}">Turnos</a>
 
                 <!-- Odontólogo y Administrador -->
-                <a href="#" th:if="${rol == 'ODONTOLOGO' or rol == 'ADMINISTRADOR'}">Odontograma</a>
+                <a href="/odontograma" th:if="${rol == 'ODONTOLOGO' or rol == 'ADMINISTRADOR'}">Odontograma</a>
 
                 <!-- Solo Administrador -->
                 <a href="#" th:if="${rol == 'ADMINISTRADOR'}">Configuración</a>

@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dentora - Odontograma</title>
+    <link rel="stylesheet" href="/css/estilos.css">
+</head>
+
+<body>
+    <div class="layout">
+        <aside class="menu-lateral">
+            <img src="/img/logo.png" alt="Logo de Dentora" class="logo-menu">
+            <nav>
+                <a href="/inicio">Inicio</a>
+                <a href="/pacientes">Pacientes</a>
+                <a href="/turnos">Turnos</a>
+                <a href="/odontograma" class="activo">Odontograma</a>
+                <a href="#">Configuración</a>
+            </nav>
+        </aside>
+
+        <div class="contenido">
+            <header class="barra-superior">
+                <span>Carlos Pérez — <strong>Administrador</strong></span>
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="boton-secundario">Cerrar sesión</button>
+                </form>
+            </header>
+
+            <main class="area-principal">
+                <h1>Odontograma</h1>
+                
+                <div class="mensaje-exito" th:if="${mensaje}" th:text="${mensaje}">Guardado</div>
+                <div class="mensaje-error" th:if="${error}" th:text="${error}">Error</div>
+                <!-- =====================================================
+                     VISTA 1: SIN PACIENTE ELEGIDO → buscador (pasos 2 y 3 del CU)
+                     ===================================================== -->
+                <th:block th:if="${paciente == null}">
+
+                    <!-- Turnos pendientes de hoy del odontólogo en sesión -->
+                    <section class="tarjeta" th:if="${turnosHoy != null and !#lists.isEmpty(turnosHoy)}">
+                        <h2>Mis turnos de hoy</h2>
+                        <table>
+                            <thead>
+                                <tr><th>Hora</th><th>Paciente</th><th>Acciones</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="t : ${turnosHoy}">
+                                    <td th:text="${#temporals.format(t.hora, 'HH:mm')}">15:00</td>
+                                    <td th:text="|${t.paciente.apellido}, ${t.paciente.nombre}|">González, María</td>
+                                    <td>
+                                        <a th:href="@{/odontograma(idPaciente=${t.paciente.idPaciente})}"
+                                           class="boton-chico">Atender</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </section>
+
+                    <section class="tarjeta">
+                        <h2>Buscar paciente</h2>
+                        <form class="buscador" action="/odontograma" method="get">
+                            <input type="text" name="buscar" th:value="${buscar}"
+                                   placeholder="Buscar por DNI o apellido" />
+                            <button type="submit" class="boton-principal">Buscar</button>
+                        </form>
+
+                        <table th:if="${pacientes != null}">
+                            <thead>
+                                <tr><th>DNI</th><th>Apellido y nombre</th><th>Acciones</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="p : ${pacientes}">
+                                    <td th:text="${p.dni}">30456789</td>
+                                    <td th:text="|${p.apellido}, ${p.nombre}|">González, María</td>
+                                    <td>
+                                        <a th:href="@{/odontograma(idPaciente=${p.idPaciente})}"
+                                           class="boton-chico">Ver odontograma</a>
+                                    </td>
+                                </tr>
+                                <!-- Alternativo 3a del CU -->
+                                <tr th:if="${#lists.isEmpty(pacientes)}">
+                                    <td colspan="3">No se encontraron pacientes.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </section>
+                </th:block>
+
+                <!-- =====================================================
+                     VISTA 2: PACIENTE ELEGIDO → ficha, odontograma e historial
+                     ===================================================== -->
+                <th:block th:if="${paciente != null}">
+
+                    <!-- ========== FICHA DEL PACIENTE (paso 4) ========== -->
+                    <section class="tarjeta ficha-paciente">
+                        <div>
+                            <strong th:text="|${paciente.apellido}, ${paciente.nombre}|">González, María</strong><br>
+                            <!-- CAMBIO: el texto se arma con + dentro de un solo ${...} -->
+                            <span class="nota"
+                                  th:text="${'DNI ' + paciente.dni + ' · '
+                                           + (edad != null ? edad + ' años' : 'Edad sin cargar') + ' · '
+                                           + (paciente.obraSocial != null ? paciente.obraSocial.nombre : 'Particular')}">
+                                DNI 30456789 · 41 años · OSDE
+                            </span>
+                        </div>
+                        <a href="/odontograma" class="boton-chico">Cambiar paciente</a>
+                    </section>
+
+                    <!-- ========== ODONTOGRAMA (paso 5) ========== -->
+                    <section class="tarjeta">
+                        <h2>Estado dental</h2>
+                        <div class="odontograma">
+                            <div class="arcada" id="arcada-superior"></div>
+                            <div class="arcada" id="arcada-inferior"></div>
+                        </div>
+                        <p id="seleccion" class="nota">Hacé clic en una cara de un diente para seleccionarla.</p>
+                        <div class="leyenda">
+                            <span><span class="muestra muestra-a-realizar"></span>A realizar</span>
+                            <span><span class="muestra muestra-realizado"></span>Realizado</span>
+                            <span><span class="muestra"></span>Sano / sin registro</span>
+                        </div>
+                    </section>
+
+                                        <!-- ========== REGISTRAR CONSULTA (pasos 7 a 18) ========== -->
+                    <section class="tarjeta">
+                        <h2>Registrar consulta</h2>
+
+                        <form id="form-consulta" th:action="@{/odontograma/consulta}" method="post">
+                            <input type="hidden" name="idPaciente" th:value="${paciente.idPaciente}">
+
+                            <fieldset>
+                                <legend>Datos de la consulta</legend>
+                                <div class="grilla-form">
+                                    <div>
+                                        <label for="fechaConsulta">Fecha *</label>
+                                        <!-- Hoy por defecto; max = hoy (no se permiten fechas futuras) -->
+                                        <input type="date" id="fechaConsulta" name="fecha" required
+                                               th:value="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}"
+                                               th:max="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}">
+                                    </div>
+
+                                    <div>
+                                        <label for="turno">Turno asociado</label>
+                                        <!-- Los turnos van primero: el navegador preselecciona el primero (paso 7).
+                                             Si no hay turnos, queda "Sin turno" (alternativo 7a) -->
+                                        <select id="turno" name="idTurno">
+                                            <option th:each="t : ${turnosPaciente}"
+                                                    th:value="${t.idTurno}"
+                                                    th:text="${#temporals.format(t.fecha, 'dd/MM/yyyy') + ' ' + #temporals.format(t.hora, 'HH:mm') + ' - ' + t.odontologo.nombre}">
+                                                09/11/2026 15:00 - Juan Gaite
+                                            </option>
+                                            <option value="">Sin turno (consulta espontánea)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="campo-ancho">
+                                        <label for="motivo">Motivo *</label>
+                                        <input type="text" id="motivo" name="motivo" maxlength="255" required
+                                               placeholder="Ej: dolor en molar superior derecho">
+                                    </div>
+                                </div>
+                            </fieldset>
+
+                            <fieldset>
+                                <legend>Agregar tratamiento</legend>
+                                <p class="nota">Seleccioná en el odontograma una o más caras del mismo diente.</p>
+
+                                <div class="grilla-form">
+                                    <div>
+                                        <label for="diente">Diente</label>
+                                        <input type="text" id="diente" readonly placeholder="Elegí en el odontograma">
+                                    </div>
+                                    <div>
+                                        <label for="caras">Caras</label>
+                                        <input type="text" id="caras" readonly placeholder="Elegí en el odontograma">
+                                    </div>
+                                    <div>
+                                        <label for="tipoTratamiento">Tratamiento</label>
+                                        <!-- Sin "name": estos campos NO se envían directo.
+                                             El JavaScript los copia a campos ocultos al tocar "+ Agregar" -->
+                                        <select id="tipoTratamiento">
+                                            <option value="">Seleccionar...</option>
+                                            <option th:each="tp : ${tipos}" th:value="${tp.idTipoTrat}"
+                                                    th:text="${tp.nombre}">Obturación</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="estadoTratamiento">Estado</label>
+                                        <select id="estadoTratamiento">
+                                            <option value="">Seleccionar...</option>
+                                            <option value="a-realizar">A realizar</option>
+                                            <option value="realizado">Realizado</option>
+                                        </select>
+                                    </div>
+                                    <div class="campo-ancho">
+                                        <label for="diagnostico">Diagnóstico</label>
+                                        <input type="text" id="diagnostico" maxlength="255" placeholder="Ej: caries profunda">
+                                    </div>
+                                    <div class="campo-ancho">
+                                        <label for="observaciones">Observaciones</label>
+                                        <textarea id="observaciones" rows="2" maxlength="500"></textarea>
+                                    </div>
+                                </div>
+
+                                <button type="button" id="btn-agregar" class="boton-principal">+ Agregar a la consulta</button>
+                            </fieldset>
+
+                            <h3>Tratamientos de esta consulta</h3>
+                            <table>
+                                <thead>
+                                    <tr><th>Diente</th><th>Caras</th><th>Tratamiento</th><th>Diagnóstico</th><th>Estado</th></tr>
+                                </thead>
+                                <tbody id="detalle-consulta">
+                                    <tr><td colspan="5" class="sin-acciones">Todavía no se agregaron tratamientos.</td></tr>
+                                </tbody>
+                            </table>
+
+                            <!-- Acá el JavaScript pone los campos ocultos detalles[0].diente, detalles[0].caras... -->
+                            <div id="detalles-ocultos"></div>
+
+                            <div class="botones-form">
+                                <a id="btn-cancelar" th:href="@{/odontograma(idPaciente=${paciente.idPaciente})}"
+                                   class="boton-secundario">Cancelar</a>
+                                <button type="submit" class="boton-principal">Guardar consulta</button>
+                            </div>
+                        </form>
+                    </section>
+
+                    <!-- ========== HISTORIAL CLÍNICO (paso 6) ========== -->
+                    <section class="tarjeta">
+                        <h2>Historial clínico</h2>
+                        <table>
+                            <thead>
+                                <tr><th>Fecha</th><th>Motivo</th><th>Odontólogo</th><th>Tratamientos</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="c : ${consultas}">
+                                    <td th:text="${#temporals.format(c.fecha, 'dd/MM/yyyy')}">10/03/2026</td>
+                                    <td th:text="${c.motivo}">Control</td>
+                                    <td th:text="${c.odontologo.nombre}">Juan Gaite</td>
+                                    <td>
+                                        <!-- Un renglón por cada tratamiento de la consulta.
+                                             caras.![nombre] = "la lista de los nombres de las caras" -->
+                                        <div th:each="d : ${c.detalles}">
+                                            <!-- CAMBIO: armado con + dentro de un solo ${...} -->
+                                            <span th:text="${d.diente.numeroFDI + ' (' + #strings.listJoin(d.caras.![nombre], ', ') + '): '
+                                                             + d.tipoTratamiento.nombre + ' — '}">
+                                                26 (Oclusal): Obturación —
+                                            </span>
+                                            <span class="estado"
+                                                  th:classappend="${d.estado.nombre == 'Realizado'} ? 'estado-atendido' : 'estado-cancelado'"
+                                                  th:text="${d.estado.nombre}">Realizado</span>
+                                        </div>
+                                        <!-- RN-17: una consulta puede no tener tratamientos -->
+                                        <span th:if="${#lists.isEmpty(c.detalles)}" class="nota">Sin tratamientos</span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(consultas)}">
+                                    <td colspan="4">El paciente todavía no tiene consultas registradas.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </section>
+                </th:block>
+            </main>
+        </div>
+    </div>
+
+    <!-- th:inline="javascript" permite pasarle datos del servidor al JavaScript.
+         Solo se incluye cuando hay un paciente elegido -->
+    <script th:if="${paciente != null}" th:inline="javascript">
+        // =========================================================
+        // 1. DATOS
+        // =========================================================
+        const dientesSuperiores = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
+        const dientesInferiores = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
+
+        // CAMBIO: la lista ya no está escrita a mano. Thymeleaf la reemplaza
+        // por la que armó OdontogramaService, en formato JSON.
+        // (Ojo: en los comentarios de este bloque no hay que escribir corchetes dobles,
+        //  porque Thymeleaf los intenta procesar.)
+        const tratamientos = /*[[${tratamientos}]]*/ [];
+
+        // =========================================================
+        // 2. FUNCIONES (iguales a la maqueta)
+        // =========================================================
+        function obtenerNombresCaras(numero) {
+            const cuadrante = Math.floor(numero / 10);
+            const esSuperior = (cuadrante === 1 || cuadrante === 2);
+            const ladoDerechoPaciente = (cuadrante === 1 || cuadrante === 4);
+            return {
+                arriba:    esSuperior ? 'vestibular' : 'lingual',
+                abajo:     esSuperior ? 'palatina'   : 'vestibular',   // CAMBIO: "palatina", igual que en la base
+                izquierda: ladoDerechoPaciente ? 'distal' : 'mesial',
+                derecha:   ladoDerechoPaciente ? 'mesial' : 'distal',
+                centro:    'oclusal'
+            };
+        }
+
+        function buscarEstado(numero, cara) {
+            const encontrado = tratamientos.find(t => t.diente === numero && t.cara === cara);
+            return encontrado ? encontrado.estado : '';
+        }
+
+        function crearCara(etiqueta, atributos, numero, nombreCara) {
+            const estado = buscarEstado(numero, nombreCara);
+            return `<${etiqueta} ${atributos} class="cara ${estado}"
+                     data-diente="${numero}" data-cara="${nombreCara}"></${etiqueta}>`;
+        }
+
+        function crearDiente(numero) {
+            const c = obtenerNombresCaras(numero);
+            return `
+                <div class="diente">
+                    <span>${numero}</span>
+                    <svg viewBox="0 0 40 40">
+                        ${crearCara('polygon', 'points="0,0 40,0 28,12 12,12"',   numero, c.arriba)}
+                        ${crearCara('polygon', 'points="12,28 28,28 40,40 0,40"', numero, c.abajo)}
+                        ${crearCara('polygon', 'points="0,0 12,12 12,28 0,40"',   numero, c.izquierda)}
+                        ${crearCara('polygon', 'points="40,0 40,40 28,28 28,12"', numero, c.derecha)}
+                        ${crearCara('rect',    'x="12" y="12" width="16" height="16"', numero, c.centro)}
+                    </svg>
+                </div>`;
+        }
+
+        function dibujarArcada(idContenedor, numeros) {
+            let html = '';
+            numeros.forEach((numero, indice) => {
+                if (indice === 8) html += '<div class="linea-media"></div>';
+                html += crearDiente(numero);
+            });
+            document.getElementById(idContenedor).innerHTML = html;
+        }
+
+        // =========================================================
+        // 3. EJECUCIÓN
+        // =========================================================
+        dibujarArcada('arcada-superior', dientesSuperiores);
+        dibujarArcada('arcada-inferior', dientesInferiores);
+
+                // =========================================================
+        // 4. SELECCIÓN DE CARAS (pasos 9 y 10, alternativos 9a y 9b)
+        // =========================================================
+        let dienteSeleccionado = null;
+        let carasSeleccionadas = [];
+
+        document.querySelector('.odontograma').addEventListener('click', (evento) => {
+            const elemento = evento.target;
+            if (!elemento.classList.contains('cara')) return;
+
+            const diente = Number(elemento.dataset.diente);
+            const cara = elemento.dataset.cara;
+
+            // 9a: clic en OTRO diente → se descarta la selección anterior
+            if (diente !== dienteSeleccionado) {
+                limpiarSeleccion();
+                dienteSeleccionado = diente;
+            }
+
+            // 9b: clic en una cara ya elegida → se quita
+            if (carasSeleccionadas.includes(cara)) {
+                carasSeleccionadas = carasSeleccionadas.filter(c => c !== cara);
+                elemento.classList.remove('seleccionada');
+            } else {
+                carasSeleccionadas.push(cara);
+                elemento.classList.add('seleccionada');
+            }
+            actualizarCampos();
+        });
+
+        function limpiarSeleccion() {
+            document.querySelectorAll('.cara.seleccionada').forEach(c => c.classList.remove('seleccionada'));
+            dienteSeleccionado = null;
+            carasSeleccionadas = [];
+        }
+
+        function actualizarCampos() {
+            const hayCaras = carasSeleccionadas.length > 0;
+            document.getElementById('diente').value = hayCaras ? dienteSeleccionado : '';
+            document.getElementById('caras').value = carasSeleccionadas.join(', ');
+            document.getElementById('seleccion').textContent = hayCaras
+                ? `Seleccionado: diente ${dienteSeleccionado}, caras: ${carasSeleccionadas.join(', ')}`
+                : 'Hacé clic en una o más caras de un diente para seleccionarlas.';
+        }
+
+        // =========================================================
+        // 5. AGREGAR UN TRATAMIENTO A LA CONSULTA (pasos 11 a 13)
+        // =========================================================
+        // Tratamientos agregados en ESTA consulta (todavía no guardados)
+        let detallesConsulta = [];
+
+        document.getElementById('btn-agregar').addEventListener('click', () => {
+            const tipo = document.getElementById('tipoTratamiento');
+            const estado = document.getElementById('estadoTratamiento');
+            const diagnostico = document.getElementById('diagnostico');
+            const observaciones = document.getElementById('observaciones');
+
+            // Paso 12 / alternativo 12a
+            if (carasSeleccionadas.length === 0 || tipo.value === '' || estado.value === '') {
+                alert('Seleccioná al menos una cara y completá tratamiento y estado.');
+                return;
+            }
+
+            // 13a: si alguna de estas caras ya estaba en otro tratamiento de esta consulta,
+            // se le quita a ese tratamiento (el nuevo lo reemplaza)
+            detallesConsulta.forEach(d => {
+                if (d.diente === dienteSeleccionado) {
+                    d.caras = d.caras.filter(c => !carasSeleccionadas.includes(c));
+                }
+            });
+            detallesConsulta = detallesConsulta.filter(d => d.caras.length > 0);
+
+            // Guardamos el tratamiento nuevo
+            detallesConsulta.push({
+                diente: dienteSeleccionado,
+                caras: [...carasSeleccionadas],   // copia de la lista
+                idTipo: tipo.value,
+                tipoTexto: tipo.options[tipo.selectedIndex].text,
+                estado: estado.value,
+                estadoTexto: estado.options[estado.selectedIndex].text,
+                diagnostico: diagnostico.value.trim(),
+                observaciones: observaciones.value.trim()
+            });
+
+            // Pintar las caras en el odontograma con el color nuevo
+            carasSeleccionadas.forEach(cara => {
+                const pos = tratamientos.findIndex(t => t.diente === dienteSeleccionado && t.cara === cara);
+                if (pos !== -1) tratamientos.splice(pos, 1);
+                tratamientos.push({ diente: dienteSeleccionado, cara: cara, estado: estado.value });
+            });
+            dibujarArcada('arcada-superior', dientesSuperiores);
+            dibujarArcada('arcada-inferior', dientesInferiores);
+
+            // Limpiar todo para el próximo tratamiento
+            limpiarSeleccion();
+            actualizarCampos();
+            tipo.value = '';
+            estado.value = '';
+            diagnostico.value = '';
+            observaciones.value = '';
+
+            mostrarDetalles();
+        });
+
+        // Redibuja la tabla "Tratamientos de esta consulta" y los campos ocultos
+        function mostrarDetalles() {
+            const tbody = document.getElementById('detalle-consulta');
+            const ocultos = document.getElementById('detalles-ocultos');
+            tbody.innerHTML = '';
+            ocultos.innerHTML = '';
+
+            if (detallesConsulta.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="sin-acciones">Todavía no se agregaron tratamientos.</td></tr>';
+                return;
+            }
+
+            detallesConsulta.forEach((d, i) => {
+                // Fila visible. Usamos textContent (y no innerHTML) para que lo que
+                // se escriba en diagnóstico se muestre como texto y no se ejecute como HTML
+                const fila = tbody.insertRow();
+                [d.diente, d.caras.join(', '), d.tipoTexto, d.diagnostico || '—', d.estadoTexto]
+                    .forEach(valor => { fila.insertCell().textContent = valor; });
+
+                // Campos ocultos: viajan al servidor como detalles[0].diente, detalles[0].caras...
+                // Spring los junta en la lista "detalles" de ConsultaForm
+                agregarOculto(ocultos, `detalles${'['}${i}].diente`, d.diente);
+                agregarOculto(ocultos, `detalles${'['}${i}].caras`, d.caras.join(','));
+                agregarOculto(ocultos, `detalles${'['}${i}].idTipo`, d.idTipo);
+                agregarOculto(ocultos, `detalles${'['}${i}].estado`, d.estado);
+                agregarOculto(ocultos, `detalles${'['}${i}].diagnostico`, d.diagnostico);
+                agregarOculto(ocultos, `detalles${'['}${i}].observaciones`, d.observaciones);
+            });
+        }
+
+        function agregarOculto(contenedor, nombre, valor) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = nombre;
+            input.value = valor;
+            contenedor.appendChild(input);
+        }
+
+        // =========================================================
+        // 6. CANCELAR (alternativo 14a)
+        // =========================================================
+        document.getElementById('btn-cancelar').addEventListener('click', (evento) => {
+            if (detallesConsulta.length > 0 &&
+                !confirm('Se perderán los tratamientos no guardados. ¿Continuar?')) {
+                evento.preventDefault();   // no sale de la página
+            }
+        });
+        
+    </script>
+</body>
+</html>
+                                        
