@@ -26,6 +26,14 @@ import com.dentora.dentora.repository.RolRepository;
 import com.dentora.dentora.repository.SexoRepository;
 import com.dentora.dentora.repository.TurnoRepository;           // NUEVO
 import com.dentora.dentora.repository.UsuarioRepository;
+import com.dentora.dentora.model.Cara;
+import com.dentora.dentora.model.Diente;
+import com.dentora.dentora.model.EstadoTratamiento;
+import com.dentora.dentora.model.TipoTratamiento;
+import com.dentora.dentora.repository.CaraRepository;
+import com.dentora.dentora.repository.DienteRepository;
+import com.dentora.dentora.repository.EstadoTratamientoRepository;
+import com.dentora.dentora.repository.TipoTratamientoRepository;
 
 @Component
 // Spring crea esta clase automáticamente al arrancar
@@ -41,16 +49,25 @@ public class DataLoader implements CommandLineRunner {
     private final DisponibilidadRepository disponibilidadRepository;    // NUEVO
     private final TurnoRepository turnoRepository;                      // NUEVO
     private final PasswordEncoder passwordEncoder;
-
+    private final DienteRepository dienteRepository;                       // NUEVO
+    private final CaraRepository caraRepository;                           // NUEVO
+    private final TipoTratamientoRepository tipoTratamientoRepository;     // NUEVO
+    private final EstadoTratamientoRepository estadoTratamientoRepository; // NUEVO
+    
+    
     // Inyección por constructor: Spring pasa todos los repositorios y el encriptador
-    public DataLoader(RolRepository rolRepository,
+        public DataLoader(RolRepository rolRepository,
                       UsuarioRepository usuarioRepository,
                       SexoRepository sexoRepository,
                       ObraSocialRepository obraSocialRepository,
                       PacienteRepository pacienteRepository,
-                      EstadoTurnoRepository estadoTurnoRepository,          // NUEVO
-                      DisponibilidadRepository disponibilidadRepository,    // NUEVO
-                      TurnoRepository turnoRepository,                      // NUEVO
+                      EstadoTurnoRepository estadoTurnoRepository,
+                      DisponibilidadRepository disponibilidadRepository,
+                      TurnoRepository turnoRepository,
+                      DienteRepository dienteRepository,                       // NUEVO
+                      CaraRepository caraRepository,                           // NUEVO
+                      TipoTratamientoRepository tipoTratamientoRepository,     // NUEVO
+                      EstadoTratamientoRepository estadoTratamientoRepository, // NUEVO
                       PasswordEncoder passwordEncoder) {
         this.rolRepository = rolRepository;
         this.usuarioRepository = usuarioRepository;
@@ -60,6 +77,10 @@ public class DataLoader implements CommandLineRunner {
         this.estadoTurnoRepository = estadoTurnoRepository;
         this.disponibilidadRepository = disponibilidadRepository;
         this.turnoRepository = turnoRepository;
+        this.dienteRepository = dienteRepository;
+        this.caraRepository = caraRepository;
+        this.tipoTratamientoRepository = tipoTratamientoRepository;
+        this.estadoTratamientoRepository = estadoTratamientoRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -123,6 +144,41 @@ public class DataLoader implements CommandLineRunner {
             estadoTurnoRepository.save(new EstadoTurno("Atendido"));
             estadoTurnoRepository.save(new EstadoTurno("Cancelado"));
             System.out.println(">>> Catálogo de estados de turno cargado");
+        }
+
+                // NUEVO: las 32 piezas permanentes FDI.
+        // Cuadrantes 1 a 4 (sup. der., sup. izq., inf. izq., inf. der.) × piezas 1 a 8
+        if (dienteRepository.count() == 0) {
+            for (int cuadrante = 1; cuadrante <= 4; cuadrante++) {
+                for (int pieza = 1; pieza <= 8; pieza++) {
+                    dienteRepository.save(new Diente(cuadrante * 10 + pieza));   // 11, 12... 48
+                }
+            }
+            System.out.println(">>> 32 piezas dentales cargadas");
+        }
+
+        // NUEVO: caras del diente (RN-18). Palatina = superiores, Lingual = inferiores
+        if (caraRepository.count() == 0) {
+            for (String nombre : List.of("Oclusal", "Vestibular", "Palatina", "Lingual", "Mesial", "Distal")) {
+                caraRepository.save(new Cara(nombre));
+            }
+            System.out.println(">>> Caras cargadas");
+        }
+
+        // NUEVO: estados del tratamiento (catálogo fijo)
+        if (estadoTratamientoRepository.count() == 0) {
+            estadoTratamientoRepository.save(new EstadoTratamiento("A realizar"));
+            estadoTratamientoRepository.save(new EstadoTratamiento("Realizado"));
+            System.out.println(">>> Estados de tratamiento cargados");
+        }
+
+        // NUEVO: tipos de tratamiento más comunes
+        if (tipoTratamientoRepository.count() == 0) {
+            for (String nombre : List.of("Obturación", "Extracción", "Endodoncia",
+                                         "Corona", "Sellador", "Limpieza")) {
+                tipoTratamientoRepository.save(new TipoTratamiento(nombre));
+            }
+            System.out.println(">>> Tipos de tratamiento cargados");
         }
     }
 
