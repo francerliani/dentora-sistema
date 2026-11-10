@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.dentora.dentora.service.DisponibilidadService;
 import java.time.LocalTime;
+import com.dentora.dentora.service.CatalogoService;
 
 import java.util.Comparator;
 import java.util.List;
@@ -36,7 +37,8 @@ public class ConfiguracionController {
     private final ObraSocialRepository obraSocialRepository;
     private final TipoTratamientoRepository tipoTratamientoRepository;
     private final UsuarioService usuarioService;
-    private final DisponibilidadService disponibilidadService;   // NUEVO
+    private final DisponibilidadService disponibilidadService;
+    private final CatalogoService catalogoService;  
 
         public ConfiguracionController(UsuarioRepository usuarioRepository,
                                    RolRepository rolRepository,
@@ -44,7 +46,9 @@ public class ConfiguracionController {
                                    ObraSocialRepository obraSocialRepository,
                                    TipoTratamientoRepository tipoTratamientoRepository,
                                    UsuarioService usuarioService,
-                                   DisponibilidadService disponibilidadService) {
+                                   DisponibilidadService disponibilidadService,
+                                   CatalogoService catalogoService) {
+                                    
         this.usuarioRepository = usuarioRepository;
         this.rolRepository = rolRepository;
         this.disponibilidadRepository = disponibilidadRepository;
@@ -52,6 +56,7 @@ public class ConfiguracionController {
         this.tipoTratamientoRepository = tipoTratamientoRepository;
         this.usuarioService = usuarioService;
         this.disponibilidadService = disponibilidadService;
+        this.catalogoService = catalogoService;
     }
 
     // =========================================================
@@ -215,5 +220,53 @@ public class ConfiguracionController {
                 : "Horario quitado.");
 
         return "redirect:/configuracion?tab=disponibilidad&idOdontologo=" + idOdontologo;
+    }
+
+        // =========================================================
+    // CATÁLOGOS
+    // =========================================================
+
+    @PostMapping("/configuracion/obras-sociales/agregar")
+    public String agregarObraSocial(@RequestParam String nombre, RedirectAttributes redirect) {
+        try {
+            catalogoService.agregarObraSocial(nombre);
+            redirect.addFlashAttribute("mensaje", "Obra social agregada.");
+        } catch (IllegalArgumentException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/configuracion?tab=catalogos";
+    }
+
+    @PostMapping("/configuracion/obras-sociales/{id}/quitar")
+    public String quitarObraSocial(@PathVariable Integer id, RedirectAttributes redirect) {
+        try {
+            catalogoService.quitarObraSocial(id);
+            redirect.addFlashAttribute("mensaje", "Obra social quitada.");
+        } catch (IllegalArgumentException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/configuracion?tab=catalogos";
+    }
+
+    @PostMapping("/configuracion/tipos-tratamiento/agregar")
+    public String agregarTipo(@RequestParam String nombre, RedirectAttributes redirect) {
+        try {
+            catalogoService.agregarTipo(nombre);
+            redirect.addFlashAttribute("mensaje", "Tratamiento agregado.");
+        } catch (IllegalArgumentException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/configuracion?tab=catalogos";
+    }
+
+    @PostMapping("/configuracion/tipos-tratamiento/{id}/quitar")
+    public String quitarTipo(@PathVariable Integer id, RedirectAttributes redirect) {
+        try {
+            catalogoService.quitarTipo(id);
+            redirect.addFlashAttribute("mensaje", "Tratamiento quitado.");
+        } catch (IllegalArgumentException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/configuracion?tab=catalogos";
     }
 }

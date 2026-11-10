@@ -4,6 +4,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.util.Optional;
+
+import com.dentora.dentora.model.ObraSocial;
 import com.dentora.dentora.model.Paciente;
 import java.util.List;
 
@@ -35,4 +37,7 @@ boolean existsByDniAndIdPacienteNot(String dni, Integer idPaciente);
 
 // Buscar un paciente por DNI exacto (lo usa el formulario de turnos)
 Optional<Paciente> findByDni(String dni);
+
+    // Cuántos pacientes tienen esa obra social (para no quitarla si está en uso, C2a)
+    long countByObraSocial(ObraSocial obraSocial);
 }
