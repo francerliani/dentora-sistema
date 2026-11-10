@@ -143,4 +143,81 @@
                         </table>
 
                         <!-- D3: agregar franja (se conecta en la Parte B) -->
-                        <h3>Agregar
+                                                <h3>Agregar horario</h3>
+                        <form class="filtros" th:action="@{/configuracion/disponibilidad/agregar}" method="post"
+                              th:if="${odontologo != null}">
+                            <input type="hidden" name="idOdontologo" th:value="${odontologo.idUsuario}">
+                            <select name="diaSemana" required>
+                                <option value="">Día...</option>
+                                <option th:each="d : ${dias}" th:value="${d}" th:text="${nombresDias.get(d)}">Lunes</option>
+                            </select>
+                            <!-- step="3600" = el selector avanza de a 1 hora (horas en punto, RN-12) -->
+                            <input type="time" name="horaInicio" step="3600" required>
+                            <span>a</span>
+                            <input type="time" name="horaFin" step="3600" required>
+                            <button type="submit" class="boton-principal">Agregar</button>
+                        </form>
+                    </div>
+
+                    <!-- ========== PANEL 3: CATÁLOGOS ========== -->
+                    <div class="panel" id="panel-catalogos" th:classappend="${tab == 'catalogos'} ? 'activa'">
+
+                        <p class="nota">Listas de opciones que se usan en los formularios del sistema.</p>
+
+                        <div class="grilla-catalogos">
+                            <div class="catalogo">
+                                <h3>Obras sociales</h3>
+                                <ul class="lista-catalogo">
+                                    <li th:each="os : ${obrasSociales}">
+                                        <span th:text="${os.nombre}">OSDE</span>
+                                        <form th:action="@{/configuracion/obras-sociales/{id}/quitar(id=${os.idObraSocial})}"
+                                              method="post" style="display:inline">
+                                            <button type="submit" class="boton-chico boton-peligro"
+                                                    onclick="return confirm('¿Quitar esta obra social?')">Quitar</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                                <form class="fila-agregar" th:action="@{/configuracion/obras-sociales/agregar}" method="post">
+                                    <input type="text" name="nombre" placeholder="Nueva obra social" maxlength="100" required>
+                                    <button type="submit" class="boton-principal">Agregar</button>
+                                </form>
+                            </div>
+
+                            <div class="catalogo">
+                                <h3>Tipos de tratamiento</h3>
+                                <ul class="lista-catalogo">
+                                    <li th:each="tp : ${tipos}">
+                                        <span th:text="${tp.nombre}">Obturación</span>
+                                        <form th:action="@{/configuracion/tipos-tratamiento/{id}/quitar(id=${tp.idTipoTrat})}"
+                                              method="post" style="display:inline">
+                                            <button type="submit" class="boton-chico boton-peligro"
+                                                    onclick="return confirm('¿Quitar este tratamiento?')">Quitar</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                                <form class="fila-agregar" th:action="@{/configuracion/tipos-tratamiento/agregar}" method="post">
+                                    <input type="text" name="nombre" placeholder="Nuevo tratamiento" maxlength="100" required>
+                                    <button type="submit" class="boton-principal">Agregar</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Pestañas: igual que en la maqueta -->
+    <script>
+        document.querySelectorAll('.pestana').forEach(boton => {
+            boton.addEventListener('click', () => {
+                document.querySelectorAll('.pestana, .panel')
+                        .forEach(elemento => elemento.classList.remove('activa'));
+                boton.classList.add('activa');
+                document.getElementById(boton.dataset.panel).classList.add('activa');
+            });
+        });
+    </script>
+</body>
+</html>

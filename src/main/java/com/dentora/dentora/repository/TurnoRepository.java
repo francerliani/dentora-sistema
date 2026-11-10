@@ -24,4 +24,8 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer> {
                 // Cuántos turnos de un odontólogo tienen un estado desde una fecha en adelante
     // (ej: Pendientes desde hoy → no se lo puede desactivar, 3b)
     long countByOdontologoAndEstado_NombreAndFechaGreaterThanEqual(Usuario odontologo, String estado, LocalDate fecha);
+
+            // Turnos de un odontólogo con un estado, desde una fecha en adelante
+    // (para avisar cuántos turnos quedan en una franja que se quita, D2a)
+    List<Turno> findByOdontologoAndEstado_NombreAndFechaGreaterThanEqual(Usuario odontologo, String estado, LocalDate fecha);
 }

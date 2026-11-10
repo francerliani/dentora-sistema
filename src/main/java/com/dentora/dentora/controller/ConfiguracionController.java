@@ -11,6 +11,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import com.dentora.dentora.service.DisponibilidadService;
+import java.time.LocalTime;
 
 import java.util.Comparator;
 import java.util.List;
@@ -34,19 +36,22 @@ public class ConfiguracionController {
     private final ObraSocialRepository obraSocialRepository;
     private final TipoTratamientoRepository tipoTratamientoRepository;
     private final UsuarioService usuarioService;
+    private final DisponibilidadService disponibilidadService;   // NUEVO
 
-    public ConfiguracionController(UsuarioRepository usuarioRepository,
+        public ConfiguracionController(UsuarioRepository usuarioRepository,
                                    RolRepository rolRepository,
                                    DisponibilidadRepository disponibilidadRepository,
                                    ObraSocialRepository obraSocialRepository,
                                    TipoTratamientoRepository tipoTratamientoRepository,
-                                   UsuarioService usuarioService) {
+                                   UsuarioService usuarioService,
+                                   DisponibilidadService disponibilidadService) {
         this.usuarioRepository = usuarioRepository;
         this.rolRepository = rolRepository;
         this.disponibilidadRepository = disponibilidadRepository;
         this.obraSocialRepository = obraSocialRepository;
         this.tipoTratamientoRepository = tipoTratamientoRepository;
         this.usuarioService = usuarioService;
+        this.disponibilidadService = disponibilidadService;
     }
 
     // =========================================================
@@ -171,5 +176,44 @@ public class ConfiguracionController {
         usuarioService.activar(id);
         redirect.addFlashAttribute("mensaje", "Usuario activado. Si estaba bloqueado, ya puede ingresar.");
         return "redirect:/configuracion?tab=usuarios";
+    }
+
+        // =========================================================
+    // DISPONIBILIDAD
+    // =========================================================
+
+    // D3 a D6: agregar franja
+    @PostMapping("/configuracion/disponibilidad/agregar")
+    public String agregarFranja(@RequestParam Integer idOdontologo,
+                                @RequestParam(required = false) String diaSemana,
+                                @RequestParam(required = false) LocalTime horaInicio,
+                                @RequestParam(required = false) LocalTime horaFin,
+                                RedirectAttributes redirect) {
+        try {
+            disponibilidadService.agregar(idOdontologo, diaSemana, horaInicio, horaFin);
+            redirect.addFlashAttribute("mensaje", "Horario agregado.");
+        } catch (IllegalArgumentException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+        }
+        // Volvemos a la pestaña Disponibilidad del mismo odontólogo
+        return "redirect:/configuracion?tab=disponibilidad&idOdontologo=" + idOdontologo;
+    }
+
+    // D2a: quitar franja
+    @PostMapping("/configuracion/disponibilidad/{id}/quitar")
+    public String quitarFranja(@PathVariable Integer id, RedirectAttributes redirect) {
+        // Antes de borrarla, guardamos de qué odontólogo era (para volver a su pestaña)
+        Disponibilidad franja = disponibilidadRepository.findById(id).orElse(null);
+        if (franja == null) {
+            return "redirect:/configuracion?tab=disponibilidad";
+        }
+        Integer idOdontologo = franja.getOdontologo().getIdUsuario();
+
+        long turnos = disponibilidadService.quitar(id);
+        redirect.addFlashAttribute("mensaje", turnos > 0
+                ? "Horario quitado. Hay " + turnos + " turnos asignados en esta franja; se conservan."
+                : "Horario quitado.");
+
+        return "redirect:/configuracion?tab=disponibilidad&idOdontologo=" + idOdontologo;
     }
 }
