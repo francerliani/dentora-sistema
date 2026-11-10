@@ -9,4 +9,7 @@ public interface DisponibilidadRepository extends JpaRepository<Disponibilidad, 
 
     // Las franjas de un odontólogo en un día. Ej: las de jgaite los LUNES
     List<Disponibilidad> findByOdontologoAndDiaSemanaOrderByHoraInicio(Usuario odontologo, String diaSemana);
+
+        // Todas las franjas de un odontólogo (pestaña Disponibilidad)
+    List<Disponibilidad> findByOdontologo(Usuario odontologo);
 }

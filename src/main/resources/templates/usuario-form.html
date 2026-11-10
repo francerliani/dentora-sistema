@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dentora - Usuario</title>
+    <link rel="stylesheet" href="/css/estilos.css">
+</head>
+
+<body>
+    <div class="layout">
+        <aside class="menu-lateral">
+            <img src="/img/logo.png" alt="Logo de Dentora" class="logo-menu">
+            <nav>
+                <a href="/inicio">Inicio</a>
+                <a href="/pacientes">Pacientes</a>
+                <a href="/turnos">Turnos</a>
+                <a href="/odontograma">Odontograma</a>
+                <a href="/configuracion" class="activo">Configuración</a>
+            </nav>
+        </aside>
+
+        <div class="contenido">
+            <header class="barra-superior">
+                <span>Carlos Pérez — <strong>Administrador</strong></span>
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="boton-secundario">Cerrar sesión</button>
+                </form>
+            </header>
+
+            <main class="area-principal">
+                <h1 th:text="${form.idUsuario == null} ? 'Nuevo usuario' : 'Editar usuario'">Nuevo usuario</h1>
+
+                <div class="mensaje-error" th:if="${error}" th:text="${error}">Error</div>
+
+                <section class="tarjeta tarjeta-form">
+                    <form th:action="@{/configuracion/usuarios/guardar}" th:object="${form}" method="post">
+
+                        <input type="hidden" th:field="*{idUsuario}">
+
+                        <fieldset>
+                            <legend>Datos del usuario</legend>
+                            <div class="grilla-form">
+
+                                <div class="campo-ancho">
+                                    <label for="nombre">Nombre y apellido *</label>
+                                    <input type="text" th:field="*{nombre}" maxlength="100" required>
+                                </div>
+
+                                <div>
+                                    <label for="usuario">Usuario *</label>
+                                    <input type="text" th:field="*{usuario}" minlength="4" maxlength="50"
+                                           placeholder="Sin espacios" required>
+                                </div>
+
+                                <div>
+                                    <label for="idRol">Rol *</label>
+                                    <!-- 3d: si está bloqueado, el select se deshabilita y el rol viaja en un campo oculto
+                                         (un select "disabled" no se envía) -->
+                                    <select th:field="*{idRol}" th:disabled="${rolBloqueado}" required>
+                                        <option value="">Seleccionar...</option>
+                                        <option th:each="r : ${roles}" th:value="${r.idRol}"
+                                                th:text="${r.nombre == 'ODONTOLOGO'} ? 'Odontólogo'
+                                                       : (${r.nombre == 'SECRETARIA'} ? 'Secretaria' : 'Administrador')">Secretaria</option>
+                                    </select>
+                                    <input type="hidden" name="idRol" th:if="${rolBloqueado}" th:value="*{idRol}">
+                                </div>
+
+                                <div>
+                                    <label for="contrasena">Contraseña <span th:if="${form.idUsuario == null}">*</span></label>
+                                    <!-- type="password" oculta lo que se escribe -->
+                                    <input type="password" id="contrasena" name="contrasena"
+                                           th:required="${form.idUsuario == null}">
+                                </div>
+
+                                <div>
+                                    <label for="repetirContrasena">Repetir contraseña <span th:if="${form.idUsuario == null}">*</span></label>
+                                    <input type="password" id="repetirContrasena" name="repetirContrasena"
+                                           th:required="${form.idUsuario == null}">
+                                </div>
+                            </div>
+
+                            <p class="nota">Mínimo 8 caracteres, con letras y números.</p>
+                            <!-- 3a -->
+                            <p class="nota" th:if="${form.idUsuario != null}">
+                                Dejá la contraseña vacía para conservar la actual.
+                            </p>
+                        </fieldset>
+
+                        <div class="botones-form">
+                            <a href="/configuracion?tab=usuarios" class="boton-secundario">Cancelar</a>
+                            <button type="submit" class="boton-principal">Guardar</button>
+                        </div>
+                    </form>
+                </section>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

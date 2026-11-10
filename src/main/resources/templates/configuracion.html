@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dentora - Configuración</title>
+    <link rel="stylesheet" href="/css/estilos.css">
+</head>
+
+<body>
+    <div class="layout">
+        <aside class="menu-lateral">
+            <img src="/img/logo.png" alt="Logo de Dentora" class="logo-menu">
+            <nav>
+                <a href="/inicio">Inicio</a>
+                <a href="/pacientes">Pacientes</a>
+                <a href="/turnos">Turnos</a>
+                <a href="/odontograma">Odontograma</a>
+                <a href="/configuracion" class="activo">Configuración</a>
+            </nav>
+        </aside>
+
+        <div class="contenido">
+            <header class="barra-superior">
+                <span>Carlos Pérez — <strong>Administrador</strong></span>
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="boton-secundario">Cerrar sesión</button>
+                </form>
+            </header>
+
+            <main class="area-principal">
+                <h1>Configuración del sistema</h1>
+
+                <div class="mensaje-exito" th:if="${mensaje}" th:text="${mensaje}">Guardado</div>
+                <div class="mensaje-error" th:if="${error}" th:text="${error}">Error</div>
+
+                <section class="tarjeta">
+
+                    <!-- ========== PESTAÑAS ==========
+                         CAMBIO: th:classappend marca como "activa" la pestaña que indica el servidor
+                         (así, después de guardar, vuelve a la misma pestaña) -->
+                    <div class="pestanas">
+                        <button type="button" class="pestana" data-panel="panel-usuarios"
+                                th:classappend="${tab == 'usuarios'} ? 'activa'">Usuarios</button>
+                        <button type="button" class="pestana" data-panel="panel-disponibilidad"
+                                th:classappend="${tab == 'disponibilidad'} ? 'activa'">Disponibilidad</button>
+                        <button type="button" class="pestana" data-panel="panel-catalogos"
+                                th:classappend="${tab == 'catalogos'} ? 'activa'">Catálogos</button>
+                    </div>
+
+                    <!-- ========== PANEL 1: USUARIOS ========== -->
+                    <div class="panel" id="panel-usuarios" th:classappend="${tab == 'usuarios'} ? 'activa'">
+
+                        <div class="barra-acciones">
+                            <p class="nota">Usuarios con acceso al sistema y su rol.</p>
+                            <a href="/configuracion/usuarios/nuevo" class="boton-principal">+ Nuevo usuario</a>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="u : ${usuarios}">
+                                    <td th:text="${u.nombre}">Carlos Pérez</td>
+                                    <td th:text="${u.usuario}">cperez</td>
+                                    <td th:text="${u.rol.nombre == 'ODONTOLOGO'} ? 'Odontólogo'
+                                               : (${u.rol.nombre == 'SECRETARIA'} ? 'Secretaria' : 'Administrador')">Administrador</td>
+
+                                    <!-- Estado: Inactivo (baja), Bloqueado (5 intentos) o Activo -->
+                                    <td>
+                                        <span th:if="${!u.activo}" class="estado estado-cancelado">Inactivo</span>
+                                        <span th:if="${u.activo and u.intentosFallidos >= 5}" class="estado estado-cancelado">Bloqueado</span>
+                                        <span th:if="${u.activo and u.intentosFallidos < 5}" class="estado estado-atendido">Activo</span>
+                                    </td>
+
+                                    <td>
+                                        <a th:href="@{/configuracion/usuarios/editar/{id}(id=${u.idUsuario})}" class="boton-chico">Editar</a>
+
+                                        <!-- 3b: Desactivar (no aparece para uno mismo ni el único admin, 3d) -->
+                                        <form th:if="${u.activo and !#lists.contains(protegidos, u.idUsuario)}"
+                                              th:action="@{/configuracion/usuarios/{id}/desactivar(id=${u.idUsuario})}"
+                                              method="post" style="display:inline">
+                                            <button type="submit" class="boton-chico boton-peligro"
+                                                    onclick="return confirm('¿Desactivar este usuario? Ya no podrá iniciar sesión.')">Desactivar</button>
+                                        </form>
+
+                                        <!-- 3c: Activar / Desbloquear -->
+                                        <form th:if="${!u.activo or u.intentosFallidos >= 5}"
+                                              th:action="@{/configuracion/usuarios/{id}/activar(id=${u.idUsuario})}"
+                                              method="post" style="display:inline">
+                                            <button type="submit" class="boton-chico"
+                                                    th:text="${u.activo} ? 'Desbloquear' : 'Activar'">Activar</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ========== PANEL 2: DISPONIBILIDAD ========== -->
+                    <div class="panel" id="panel-disponibilidad" th:classappend="${tab == 'disponibilidad'} ? 'activa'">
+
+                        <p class="nota">
+                            Días y horarios de atención de cada odontólogo.
+                            La agenda de turnos ofrece horarios libres solo dentro de esta plantilla.
+                        </p>
+
+                        <!-- D1: elegir odontólogo. onchange = al cambiar, se envía solo -->
+                        <form action="/configuracion" method="get">
+                            <input type="hidden" name="tab" value="disponibilidad">
+                            <label for="odontologoDisp">Odontólogo</label>
+                            <select id="odontologoDisp" name="idOdontologo" class="select-corto"
+                                    onchange="this.form.submit()">
+                                <option th:each="o : ${odontologos}" th:value="${o.idUsuario}" th:text="${o.nombre}"
+                                        th:selected="${odontologo != null and o.idUsuario == odontologo.idUsuario}">Juan Gaite</option>
+                            </select>
+                        </form>
+
+                        <!-- D2: franjas del odontólogo -->
+                        <table>
+                            <thead>
+                                <tr><th>Día</th><th>Hora inicio</th><th>Hora fin</th><th>Acciones</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="f : ${franjas}">
+                                    <td th:text="${nombresDias.get(f.diaSemana)}">Lunes</td>
+                                    <td th:text="${#temporals.format(f.horaInicio, 'HH:mm')}">09:00</td>
+                                    <td th:text="${#temporals.format(f.horaFin, 'HH:mm')}">13:00</td>
+                                    <td>
+                                        <!-- D2a: se conecta en la Parte B -->
+                                        <form th:action="@{/configuracion/disponibilidad/{id}/quitar(id=${f.idDisponibilidad})}"
+                                              method="post" style="display:inline">
+                                            <button type="submit" class="boton-chico boton-peligro"
+                                                    onclick="return confirm('¿Quitar esta franja?')">Quitar</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(franjas)}">
+                                    <td colspan="4">Este odontólogo no tiene horarios cargados.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- D3: agregar franja (se conecta en la Parte B) -->
+                        <h3>Agregar

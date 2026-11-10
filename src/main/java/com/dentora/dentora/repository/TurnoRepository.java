@@ -20,4 +20,8 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer> {
     // (para el desplegable "Turno asociado" de la consulta, paso 7 del CU)
     List<Turno> findByPacienteAndOdontologoAndFechaAndEstado_NombreOrderByHora(
             Paciente paciente, Usuario odontologo, LocalDate fecha, String estado);
+
+                // Cuántos turnos de un odontólogo tienen un estado desde una fecha en adelante
+    // (ej: Pendientes desde hoy → no se lo puede desactivar, 3b)
+    long countByOdontologoAndEstado_NombreAndFechaGreaterThanEqual(Usuario odontologo, String estado, LocalDate fecha);
 }

@@ -31,7 +31,7 @@
                 <a href="/odontograma" th:if="${rol == 'ODONTOLOGO' or rol == 'ADMINISTRADOR'}">Odontograma</a>
 
                 <!-- Solo Administrador -->
-                <a href="#" th:if="${rol == 'ADMINISTRADOR'}">Configuración</a>
+                <a href="/configuracion" th:if="${rol == 'ADMINISTRADOR'}">Configuración</a>
             </nav>
         </aside>
 

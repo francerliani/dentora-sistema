@@ -14,4 +14,16 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
     // NUEVO: usuarios activos con un rol dado. Ej: findByRol_NombreAndActivoTrue("ODONTOLOGO")
     // Rol_Nombre = "el nombre del rol del usuario" (el _ entra a la relación)
     List<Usuario> findByRol_NombreAndActivoTrue(String nombreRol);
+
+        // Todos los usuarios ordenados por nombre (tabla de la pestaña Usuarios)
+    List<Usuario> findAllByOrderByNombre();
+
+    // ¿Ya existe ese nombre de usuario? (alta, 7a)
+    boolean existsByUsuario(String usuario);
+
+    // ¿Lo tiene OTRO usuario? (edición, 7a)
+    boolean existsByUsuarioAndIdUsuarioNot(String usuario, Integer idUsuario);
+
+    // Cuántos usuarios activos hay con un rol (para saber si es el único Administrador, 3d)
+    long countByRol_NombreAndActivoTrue(String nombreRol);
 }
