@@ -19,6 +19,11 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import com.dentora.dentora.service.HistoriaClinicaPdfService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -31,9 +36,10 @@ public class OdontogramaController {
     private final UsuarioRepository usuarioRepository;
     private final TurnoRepository turnoRepository;
     private final ConsultaRepository consultaRepository;
-    private final TipoTratamientoRepository tipoTratamientoRepository;   // NUEVO
+    private final TipoTratamientoRepository tipoTratamientoRepository;   
     private final OdontogramaService odontogramaService;
-    private final ConsultaService consultaService;                       // NUEVO
+    private final ConsultaService consultaService;                       
+    private final HistoriaClinicaPdfService historiaPdfService;   // NUEVO
 
     public OdontogramaController(PacienteRepository pacienteRepository,
                                  UsuarioRepository usuarioRepository,
@@ -41,7 +47,9 @@ public class OdontogramaController {
                                  ConsultaRepository consultaRepository,
                                  TipoTratamientoRepository tipoTratamientoRepository,
                                  OdontogramaService odontogramaService,
-                                 ConsultaService consultaService) {
+                                 ConsultaService consultaService,
+                                HistoriaClinicaPdfService historiaPdfService ) {
+
         this.pacienteRepository = pacienteRepository;
         this.usuarioRepository = usuarioRepository;
         this.turnoRepository = turnoRepository;
@@ -49,6 +57,8 @@ public class OdontogramaController {
         this.tipoTratamientoRepository = tipoTratamientoRepository;
         this.odontogramaService = odontogramaService;
         this.consultaService = consultaService;
+        this.historiaPdfService = historiaPdfService;;
+        
     }
 
     @GetMapping("/odontograma")
@@ -125,5 +135,23 @@ public class OdontogramaController {
             redirect.addFlashAttribute("error", "No se pudo registrar la consulta. Intente nuevamente.");
         }
         return "redirect:/odontograma?idPaciente=" + form.getIdPaciente();
+    }
+
+        // ===== NUEVO: descargar la historia clínica en PDF =====
+    @GetMapping("/odontograma/historia/{idPaciente}/pdf")
+    public ResponseEntity<byte[]> descargarHistoria(@PathVariable Integer idPaciente) {
+        Paciente paciente = pacienteRepository.findById(idPaciente).orElse(null);
+        if (paciente == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        byte[] pdf = historiaPdfService.generar(paciente);
+
+        // Le decimos al navegador: "esto es un PDF y descargalo con este nombre"
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"historia_clinica_" + paciente.getDni() + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }
