@@ -35,7 +35,9 @@ public class SecurityConfig {
 
                         // Configuración: solo Administrador
                         .requestMatchers("/configuracion/**").hasRole("ADMINISTRADOR")
-
+                        //Reportes, solo Administrador
+                        .requestMatchers("/reportes", "/reportes/**").hasRole("ADMINISTRADOR")
+                        
                         .anyRequest().authenticated())
                 // 2. El LOGIN
                 .formLogin(form -> form

@@ -32,6 +32,8 @@
 
                 <!-- Solo Administrador -->
                 <a href="/configuracion" th:if="${rol == 'ADMINISTRADOR'}">Configuración</a>
+
+                <a href="/reportes" th:if="${rol == 'ADMINISTRADOR'}">Reportes</a>
             </nav>
         </aside>
 

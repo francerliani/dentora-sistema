@@ -27,6 +27,8 @@
 
           <!-- Visible para: solo Administrador -->
           <a href="/configuracion">Configuración</a>
+
+          <a href="/reportes">Reportes</a>
         </nav>
       </aside>
 
@@ -69,7 +71,7 @@
                           th:text="${os.nombre}"
                           th:selected="${obra == #strings.toString(os.idObraSocial)}">OSDE</option>
                 </select>
-                
+
                 <button type="submit" class="boton-principal">Buscar</button>
               </form>
 

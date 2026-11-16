@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dentora - Reportes</title>
+    <link rel="stylesheet" href="/css/estilos.css">
+    <style>
+        /* Barrita del gráfico: el fondo gris es el 100%, la celeste es el valor */
+        .barra-fondo { background: #E3EAF5; border-radius: 4px; height: 12px; width: 100%; }
+        .barra-valor { background: #1FB5D9; border-radius: 4px; height: 12px; }
+        .total { font-weight: 700; margin-top: 8px; }
+    </style>
+</head>
+
+<body>
+    <div class="layout">
+        <aside class="menu-lateral">
+            <img src="/img/logo.png" alt="Logo de Dentora" class="logo-menu">
+            <nav>
+                <a href="/inicio">Inicio</a>
+                <a href="/pacientes">Pacientes</a>
+                <a href="/turnos">Turnos</a>
+                <a href="/odontograma">Odontograma</a>
+                <a href="/configuracion">Configuración</a>
+                <a href="/reportes" class="activo">Reportes</a>
+            </nav>
+        </aside>
+
+        <div class="contenido">
+            <header class="barra-superior">
+                <span>Carlos Pérez — <strong>Administrador</strong></span>
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="boton-secundario">Cerrar sesión</button>
+                </form>
+            </header>
+
+            <main class="area-principal">
+                <h1>Reportes y estadísticas</h1>
+
+                <!-- ===== FILTRO DEL PERÍODO ===== -->
+                <section class="tarjeta">
+                    <form class="filtros" action="/reportes" method="get">
+                        <label>Año
+                            <select name="anio">
+                                <option th:each="a : ${anios}" th:value="${a}" th:text="${a}"
+                                        th:selected="${a == anio}">2026</option>
+                            </select>
+                        </label>
+                        <label>Mes
+                            <select name="mes">
+                                <option value="0"  th:selected="${mes == 0}">Todo el año</option>
+                                <option value="1"  th:selected="${mes == 1}">Enero</option>
+                                <option value="2"  th:selected="${mes == 2}">Febrero</option>
+                                <option value="3"  th:selected="${mes == 3}">Marzo</option>
+                                <option value="4"  th:selected="${mes == 4}">Abril</option>
+                                <option value="5"  th:selected="${mes == 5}">Mayo</option>
+                                <option value="6"  th:selected="${mes == 6}">Junio</option>
+                                <option value="7"  th:selected="${mes == 7}">Julio</option>
+                                <option value="8"  th:selected="${mes == 8}">Agosto</option>
+                                <option value="9"  th:selected="${mes == 9}">Septiembre</option>
+                                <option value="10" th:selected="${mes == 10}">Octubre</option>
+                                <option value="11" th:selected="${mes == 11}">Noviembre</option>
+                                <option value="12" th:selected="${mes == 12}">Diciembre</option>
+                            </select>
+                        </label>
+                        <button type="submit" class="boton-principal">Ver reportes</button>
+                    </form>
+                </section>
+
+                <!-- ===== 1) TURNOS ATENDIDOS POR ODONTÓLOGO ===== -->
+                <section class="tarjeta">
+                    <h2>Turnos atendidos por odontólogo</h2>
+                    <table>
+                        <thead>
+                            <tr><th>Odontólogo</th><th>Turnos atendidos</th><th style="width:40%"></th></tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="f : ${turnos}">
+                                <td th:text="${f.etiqueta}">Juan Gaite</td>
+                                <td th:text="${f.cantidad}">5</td>
+                                <!-- La barrita: su ancho es el porcentaje respecto del mayor -->
+                                <td><div class="barra-fondo"><div class="barra-valor"
+                                         th:style="|width:${f.porcentaje}%|"></div></div></td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(turnos)}">
+                                <td colspan="3">No hay turnos atendidos en este período.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="total" th:text="|Total: ${totalTurnos} turnos atendidos|">Total: 5</p>
+                </section>
+
+                                <!-- ===== 2) PACIENTES POR OBRA SOCIAL ===== -->
+                <section class="tarjeta">
+                    <h2>Pacientes por obra social</h2>
+                    <p class="nota">Pacientes activos a la fecha (no depende del período elegido).</p>
+                    <table>
+                        <thead>
+                            <tr><th>Obra social</th><th>Pacientes</th><th style="width:40%"></th></tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="f : ${pacientes}">
+                                <td th:text="${f.etiqueta}">OSDE</td>
+                                <td th:text="${f.cantidad}">12</td>
+                                <td><div class="barra-fondo"><div class="barra-valor"
+                                         th:style="|width:${f.porcentaje}%|"></div></div></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="total" th:text="|Total: ${totalPacientes} pacientes activos|">Total: 20</p>
+                </section>
+
+                <!-- ===== 3) FACTURACIÓN POR ODONTÓLOGO ===== -->
+                <section class="tarjeta">
+                    <h2>Facturación por odontólogo</h2>
+                    <p class="nota">Suma de los precios de los tratamientos realizados en el período.</p>
+
+                    <!-- El primero de la lista es el que más facturó (vienen ordenados de mayor a menor) -->
+                    <p th:if="${!#lists.isEmpty(facturacion)}"
+                       th:text="|Mayor facturación: ${facturacion[0].etiqueta}|">Mayor facturación: Juan Gaite</p>
+
+                    <table>
+                        <thead>
+                            <tr><th>Odontólogo</th><th>Tratamientos realizados</th><th>Facturado</th><th style="width:30%"></th></tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="f : ${facturacion}">
+                                <td th:text="${f.etiqueta}">Juan Gaite</td>
+                                <td th:text="${f.cantidad}">3</td>
+                                <!-- formatDecimal: miles con punto y decimales con coma → $ 1.000.000,00 -->
+                                <td th:text="${'$ ' + #numbers.formatDecimal(f.monto, 1, 'POINT', 2, 'COMMA')}">$ 1.000.000,00</td>
+                                <td><div class="barra-fondo"><div class="barra-valor"
+                                         th:style="|width:${f.porcentaje}%|"></div></div></td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(facturacion)}">
+                                <td colspan="4">No hay tratamientos realizados en este período.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="total"
+                       th:text="${'Total facturado: $ ' + #numbers.formatDecimal(totalFacturado, 1, 'POINT', 2, 'COMMA')}">Total</p>
+                </section>
+            </main>
+        </div>
+    </div>
+</body>
+</html>
