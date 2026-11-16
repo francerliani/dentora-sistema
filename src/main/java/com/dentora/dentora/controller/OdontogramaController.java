@@ -1,5 +1,6 @@
 package com.dentora.dentora.controller;
 
+import com.dentora.dentora.model.Consulta;
 import com.dentora.dentora.model.ConsultaForm;
 import com.dentora.dentora.model.Paciente;
 import com.dentora.dentora.model.Usuario;
@@ -21,6 +22,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.List;
 
 @Controller
 public class OdontogramaController {
@@ -52,6 +54,9 @@ public class OdontogramaController {
     @GetMapping("/odontograma")
     public String ver(@RequestParam(required = false) String buscar,
                       @RequestParam(required = false) Integer idPaciente,
+                      @RequestParam(required = false) LocalDate desde,    // NUEVO
+                      @RequestParam(required = false) LocalDate hasta,    // NUEVO
+                      @RequestParam(required = false) Integer diente,
                       Authentication auth, Model model) {
 
         Usuario usuario = usuarioRepository.findByUsuario(auth.getName()).orElseThrow();
@@ -80,7 +85,19 @@ public class OdontogramaController {
         model.addAttribute("paciente", paciente);
         model.addAttribute("edad", edad);
         model.addAttribute("tratamientos", odontogramaService.estadoActual(paciente));
-        model.addAttribute("consultas", consultaRepository.findByPacienteOrderByFechaDescIdConsultaDesc(paciente));
+               
+        // Historial con filtros opcionales: desde / hasta / diente
+        List<Consulta> consultas = consultaRepository.findByPacienteOrderByFechaDescIdConsultaDesc(paciente)
+                .stream()
+                .filter(c -> desde == null || !c.getFecha().isBefore(desde))   // desde esa fecha inclusive
+                .filter(c -> hasta == null || !c.getFecha().isAfter(hasta))    // hasta esa fecha inclusive
+                .filter(c -> diente == null || c.getDetalles().stream()        // que tenga ese diente
+                        .anyMatch(d -> d.getDiente().getNumeroFDI() == diente))
+                .toList();
+        model.addAttribute("consultas", consultas);
+        model.addAttribute("desde", desde);
+        model.addAttribute("hasta", hasta);
+        model.addAttribute("diente", diente);
 
         // NUEVO: datos para el formulario "Registrar consulta"
         model.addAttribute("tipos", tipoTratamientoRepository.findAll());

@@ -60,6 +60,16 @@
                   th:value="${buscar}"
                   placeholder="Buscar por DNI o apellido"
                 />
+                                <!-- Filtro por obra social. th:selected deja marcada la que se eligió -->
+                <select name="obra">
+                  <option value="">Todas las obras sociales</option>
+                  <option value="particular" th:selected="${obra == 'particular'}">Particular</option>
+                  <option th:each="os : ${obrasSociales}"
+                          th:value="${os.idObraSocial}"
+                          th:text="${os.nombre}"
+                          th:selected="${obra == #strings.toString(os.idObraSocial)}">OSDE</option>
+                </select>
+                
                 <button type="submit" class="boton-principal">Buscar</button>
               </form>
 

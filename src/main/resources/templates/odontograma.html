@@ -232,6 +232,17 @@
                     <!-- ========== HISTORIAL CLÍNICO (paso 6) ========== -->
                     <section class="tarjeta">
                         <h2>Historial clínico</h2>
+                                                <!-- Filtros del historial. GET: los filtros viajan en la dirección -->
+                        <form class="filtros" action="/odontograma" method="get">
+                            <input type="hidden" name="idPaciente" th:value="${paciente.idPaciente}">
+                            <label>Desde <input type="date" name="desde" th:value="${desde}"></label>
+                            <label>Hasta <input type="date" name="hasta" th:value="${hasta}"></label>
+                            <label>Diente <input type="number" name="diente" th:value="${diente}"
+                                                 min="11" max="48" placeholder="Ej: 16" style="width:90px"></label>
+                            <button type="submit" class="boton-principal">Filtrar</button>
+                            <a th:href="@{/odontograma(idPaciente=${paciente.idPaciente})}"
+                               class="boton-secundario">Limpiar</a>
+                        </form>
                         <table>
                             <thead>
                                 <tr><th>Fecha</th><th>Motivo</th><th>Odontólogo</th><th>Tratamientos</th></tr>
@@ -259,7 +270,7 @@
                                     </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(consultas)}">
-                                    <td colspan="4">El paciente todavía no tiene consultas registradas.</td>
+                                    <td colspan="4">No hay consultas para mostrar.</td>
                                 </tr>
                             </tbody>
                         </table>

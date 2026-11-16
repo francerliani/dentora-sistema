@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;   // NUEVO: para le
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.List;
 
 @Controller
 public class PacienteController {
@@ -29,18 +30,37 @@ public class PacienteController {
         this.obraSocialRepository = obraSocialRepository;
     }
 
-    // ===== LISTADO + BUSCADOR =====
+        // ===== LISTADO + BUSCADOR + FILTRO POR OBRA SOCIAL =====
+    // obra = "" (todas), "particular" (sin obra social) o el id de una obra social
     @GetMapping("/pacientes")
-    public String listar(@RequestParam(required = false) String buscar, Model model) {
-        if (buscar == null || buscar.isBlank()) {
-            model.addAttribute("pacientes", pacienteRepository.findByActivoTrue());
-        } else {
-            model.addAttribute("pacientes", pacienteRepository.buscar(buscar.trim()));
+    public String listar(@RequestParam(required = false) String buscar,
+                         @RequestParam(required = false) String obra,
+                         Model model) {
+
+        // 1) Primero el buscador (igual que antes)
+        List<Paciente> pacientes = (buscar == null || buscar.isBlank())
+                ? pacienteRepository.findByActivoTrue()
+                : pacienteRepository.buscar(buscar.trim());
+
+        // 2) Después el filtro de obra social, sobre ese resultado
+        if ("particular".equals(obra)) {
+            pacientes = pacientes.stream()
+                    .filter(p -> p.getObraSocial() == null)
+                    .toList();
+        } else if (obra != null && !obra.isBlank()) {
+            Integer idObra = Integer.valueOf(obra);
+            pacientes = pacientes.stream()
+                    .filter(p -> p.getObraSocial() != null
+                              && idObra.equals(p.getObraSocial().getIdObraSocial()))
+                    .toList();
         }
+
+        model.addAttribute("pacientes", pacientes);
         model.addAttribute("buscar", buscar);
+        model.addAttribute("obra", obra);                                   // para que quede elegida
+        model.addAttribute("obrasSociales", obraSocialRepository.findAll()); // opciones del filtro
         return "pacientes";
     }
-
     // ===== ALTA: abrir el formulario vacío =====
     @GetMapping("/pacientes/nuevo")
     public String nuevo(Model model) {
