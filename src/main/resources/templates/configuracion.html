@@ -183,11 +183,20 @@
                                 </form>
                             </div>
 
-                            <div class="catalogo">
+                                <div class="catalogo">
                                 <h3>Tipos de tratamiento</h3>
                                 <ul class="lista-catalogo">
                                     <li th:each="tp : ${tipos}">
                                         <span th:text="${tp.nombre}">Obturación</span>
+
+                                        <!-- NUEVO: precio editable. step="0.01" permite centavos -->
+                                        <form th:action="@{/configuracion/tipos-tratamiento/{id}/precio(id=${tp.idTipoTrat})}"
+                                              method="post" style="display:inline">
+                                            $ <input type="number" name="precio" th:value="${tp.precio}"
+                                                     min="0" step="0.01" style="width:100px" required>
+                                            <button type="submit" class="boton-chico">Guardar</button>
+                                        </form>
+
                                         <form th:action="@{/configuracion/tipos-tratamiento/{id}/quitar(id=${tp.idTipoTrat})}"
                                               method="post" style="display:inline">
                                             <button type="submit" class="boton-chico boton-peligro"
@@ -197,6 +206,9 @@
                                 </ul>
                                 <form class="fila-agregar" th:action="@{/configuracion/tipos-tratamiento/agregar}" method="post">
                                     <input type="text" name="nombre" placeholder="Nuevo tratamiento" maxlength="100" required>
+                                    <!-- NUEVO: precio del tratamiento nuevo -->
+                                    <input type="number" name="precio" placeholder="Precio" min="0" step="0.01"
+                                           style="width:110px" required>
                                     <button type="submit" class="boton-principal">Agregar</button>
                                 </form>
                             </div>

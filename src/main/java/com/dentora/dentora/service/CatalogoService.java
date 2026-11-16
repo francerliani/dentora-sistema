@@ -7,6 +7,7 @@ import com.dentora.dentora.repository.ObraSocialRepository;
 import com.dentora.dentora.repository.PacienteRepository;
 import com.dentora.dentora.repository.TipoTratamientoRepository;
 import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
 
 // Reglas de la pestaña Catálogos (CU-04, sub-flujo C)
 @Service
@@ -51,12 +52,30 @@ public class CatalogoService {
 
     // ===== TIPOS DE TRATAMIENTO =====
 
-    public void agregarTipo(String nombre) {
+       public void agregarTipo(String nombre, BigDecimal precio) {
         String limpio = validarNombre(nombre);
         if (tipoTratamientoRepository.existsByNombreIgnoreCase(limpio)) {
             throw new IllegalArgumentException("Ya existe «" + limpio + "» en el catálogo.");
         }
-        tipoTratamientoRepository.save(new TipoTratamiento(limpio));
+        TipoTratamiento tipo = new TipoTratamiento(limpio);
+        tipo.setPrecio(validarPrecio(precio));
+        tipoTratamientoRepository.save(tipo);
+    }
+
+    // NUEVO: cambiar el precio de un tratamiento existente
+    public void actualizarPrecio(Integer id, BigDecimal precio) {
+        TipoTratamiento tipo = tipoTratamientoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("El tratamiento no existe."));
+        tipo.setPrecio(validarPrecio(precio));
+        tipoTratamientoRepository.save(tipo);
+    }
+
+    // El precio es obligatorio y no puede ser negativo
+    private BigDecimal validarPrecio(BigDecimal precio) {
+        if (precio == null || precio.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Ingrese un precio válido (0 o mayor).");
+        }
+        return precio;
     }
 
     public void quitarTipo(Integer id) {

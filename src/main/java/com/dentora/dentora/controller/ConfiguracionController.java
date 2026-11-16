@@ -14,7 +14,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.dentora.dentora.service.DisponibilidadService;
 import java.time.LocalTime;
 import com.dentora.dentora.service.CatalogoService;
-
+import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -248,11 +248,27 @@ public class ConfiguracionController {
         return "redirect:/configuracion?tab=catalogos";
     }
 
-    @PostMapping("/configuracion/tipos-tratamiento/agregar")
-    public String agregarTipo(@RequestParam String nombre, RedirectAttributes redirect) {
+       @PostMapping("/configuracion/tipos-tratamiento/agregar")
+    public String agregarTipo(@RequestParam String nombre,
+                              @RequestParam(required = false) BigDecimal precio,
+                              RedirectAttributes redirect) {
         try {
-            catalogoService.agregarTipo(nombre);
+            catalogoService.agregarTipo(nombre, precio);
             redirect.addFlashAttribute("mensaje", "Tratamiento agregado.");
+        } catch (IllegalArgumentException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/configuracion?tab=catalogos";
+    }
+
+    // NUEVO: actualizar el precio
+    @PostMapping("/configuracion/tipos-tratamiento/{id}/precio")
+    public String actualizarPrecio(@PathVariable Integer id,
+                                   @RequestParam(required = false) BigDecimal precio,
+                                   RedirectAttributes redirect) {
+        try {
+            catalogoService.actualizarPrecio(id, precio);
+            redirect.addFlashAttribute("mensaje", "Precio actualizado.");
         } catch (IllegalArgumentException e) {
             redirect.addFlashAttribute("error", e.getMessage());
         }
