@@ -166,7 +166,8 @@
                             <fieldset>
                                 <legend>Agregar tratamiento</legend>
                                 <p class="nota">Seleccioná en el odontograma una o más caras del mismo diente.</p>
-
+                                     <!-- Lo completa el JavaScript cuando se autocompleta un tratamiento pendiente -->
+                                <p id="aviso-pendiente" class="nota"></p>
                                 <div class="grilla-form">
                                     <div>
                                         <label for="diente">Diente</label>
@@ -195,7 +196,7 @@
                                         </select>
                                     </div>
                                     <div class="campo-ancho">
-                                        <label for="diagnostico">Diagnóstico</label>
+                                        <label for="diagnostico">Diagnóstico *</label>
                                         <input type="text" id="diagnostico" maxlength="255" placeholder="Ej: caries profunda">
                                     </div>
                                     <div class="campo-ancho">
@@ -341,7 +342,7 @@
         dibujarArcada('arcada-inferior', dientesInferiores);
 
                 // =========================================================
-        // 4. SELECCIÓN DE CARAS (pasos 9 y 10, alternativos 9a y 9b)
+                // 4. SELECCIÓN DE CARAS (pasos 9 y 10, alternativos 9a y 9b)
         // =========================================================
         let dienteSeleccionado = null;
         let carasSeleccionadas = [];
@@ -366,16 +367,45 @@
             } else {
                 carasSeleccionadas.push(cara);
                 elemento.classList.add('seleccionada');
+                autocompletarPendiente(diente, cara);   // NUEVO
             }
             actualizarCampos();
         });
+
+        // NUEVO: si la cara tiene un tratamiento "A realizar", lo carga solo
+        function autocompletarPendiente(diente, cara) {
+            const previo = tratamientos.find(t => t.diente === diente && t.cara === cara);
+
+            // Solo si hay un tratamiento anterior, está pendiente y viene de la base (tiene idDetalle)
+            if (!previo || previo.estado !== 'a-realizar' || !previo.idDetalle) return;
+
+            // 1) Seleccionar las OTRAS caras de ese mismo tratamiento que sigan pendientes
+            tratamientos
+                .filter(t => t.idDetalle === previo.idDetalle && t.estado === 'a-realizar'
+                             && !carasSeleccionadas.includes(t.cara))
+                .forEach(t => {
+                    carasSeleccionadas.push(t.cara);
+                    document.querySelector(`.cara[data-diente="${diente}"][data-cara="${t.cara}"]`)
+                            .classList.add('seleccionada');
+                });
+
+            // 2) Completar los campos con lo que se diagnosticó antes
+            document.getElementById('tipoTratamiento').value = String(previo.idTipo);
+            document.getElementById('diagnostico').value = previo.diagnostico;
+            document.getElementById('estadoTratamiento').value = 'realizado';
+
+            // 3) Avisar qué se cargó
+            document.getElementById('aviso-pendiente').textContent =
+                `Tratamiento pendiente cargado: ${previo.tipoNombre} (${previo.diagnostico}). `
+                + 'Revisá los datos y tocá "+ Agregar a la consulta".';
+        }
 
         function limpiarSeleccion() {
             document.querySelectorAll('.cara.seleccionada').forEach(c => c.classList.remove('seleccionada'));
             dienteSeleccionado = null;
             carasSeleccionadas = [];
+            document.getElementById('aviso-pendiente').textContent = '';   // NUEVO
         }
-
         function actualizarCampos() {
             const hayCaras = carasSeleccionadas.length > 0;
             document.getElementById('diente').value = hayCaras ? dienteSeleccionado : '';
@@ -384,6 +414,7 @@
                 ? `Seleccionado: diente ${dienteSeleccionado}, caras: ${carasSeleccionadas.join(', ')}`
                 : 'Hacé clic en una o más caras de un diente para seleccionarlas.';
         }
+
 
         // =========================================================
         // 5. AGREGAR UN TRATAMIENTO A LA CONSULTA (pasos 11 a 13)
@@ -397,9 +428,12 @@
             const diagnostico = document.getElementById('diagnostico');
             const observaciones = document.getElementById('observaciones');
 
-            // Paso 12 / alternativo 12a
-            if (carasSeleccionadas.length === 0 || tipo.value === '' || estado.value === '') {
-                alert('Seleccioná al menos una cara y completá tratamiento y estado.');
+            
+            // Paso 12: caras, tratamiento, estado y DIAGNÓSTICO son obligatorios
+            // (.trim() saca los espacios: así "   " cuenta como vacío)
+            if (carasSeleccionadas.length === 0 || tipo.value === '' || estado.value === ''
+                    || diagnostico.value.trim() === '') {
+                alert('Seleccioná al menos una cara y completá tratamiento, estado y diagnóstico.');
                 return;
             }
 
@@ -424,6 +458,7 @@
                 observaciones: observaciones.value.trim()
             });
 
+
             // Pintar las caras en el odontograma con el color nuevo
             carasSeleccionadas.forEach(cara => {
                 const pos = tratamientos.findIndex(t => t.diente === dienteSeleccionado && t.cara === cara);
@@ -440,7 +475,7 @@
             estado.value = '';
             diagnostico.value = '';
             observaciones.value = '';
-
+            document.getElementById('aviso-pendiente').textContent = '';
             mostrarDetalles();
         });
 

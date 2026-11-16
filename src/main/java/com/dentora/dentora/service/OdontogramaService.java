@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,28 +22,34 @@ public class OdontogramaService {
         this.detalleRepository = detalleRepository;
     }
 
-    // RN-14: el odontograma NO se guarda; se reconstruye cada vez.
-    // Devuelve una lista como la que usaba la maqueta:
-    //   [ {diente: 16, cara: "oclusal", estado: "a-realizar"}, ... ]
+    // RN-14: el odontograma se reconstruye con el último tratamiento de cada cara.
+    // CAMBIO: además del estado, manda los datos del tratamiento para el autocompletado
     @Transactional(readOnly = true)
     public List<Map<String, Object>> estadoActual(Paciente paciente) {
 
-        // Clave "diente-cara" (ej: "16-oclusal") → su último tratamiento.
-        // Un Map no repite claves: si la cara aparece otra vez, el nuevo PISA al viejo.
         Map<String, Map<String, Object>> porCara = new LinkedHashMap<>();
 
-        // Vienen ordenados del más VIEJO al más NUEVO → al final queda el más reciente
         for (DetalleTratamiento d : detalleRepository
                 .findByConsulta_PacienteOrderByConsulta_FechaAscIdDetalleAsc(paciente)) {
 
             int numero = d.getDiente().getNumeroFDI();
-            // El JavaScript usa "a-realizar" y "realizado" (son las clases CSS del color)
             String estado = d.getEstado().getNombre().equals("Realizado") ? "realizado" : "a-realizar";
 
             for (Cara c : d.getCaras()) {
-                String cara = c.getNombre().toLowerCase();   // "Oclusal" → "oclusal"
-                porCara.put(numero + "-" + cara,
-                        Map.of("diente", numero, "cara", cara, "estado", estado));
+                String cara = c.getNombre().toLowerCase();
+
+                // HashMap (y no Map.of) porque Map.of no acepta valores null
+                Map<String, Object> info = new HashMap<>();
+                info.put("diente", numero);
+                info.put("cara", cara);
+                info.put("estado", estado);
+                // NUEVO: datos para el autocompletado
+                info.put("idDetalle", d.getIdDetalle());   // para encontrar las otras caras del mismo tratamiento
+                info.put("idTipo", d.getTipoTratamiento().getIdTipoTrat());
+                info.put("tipoNombre", d.getTipoTratamiento().getNombre());
+                info.put("diagnostico", d.getDiagnostico() != null ? d.getDiagnostico() : "");
+
+                porCara.put(numero + "-" + cara, info);
             }
         }
         return new ArrayList<>(porCara.values());

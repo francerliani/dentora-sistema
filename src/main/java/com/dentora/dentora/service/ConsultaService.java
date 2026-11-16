@@ -70,9 +70,12 @@ public class ConsultaService {
             if (df.getDiente() == null) continue;   // fila vacía: se ignora
 
             // Validaciones del detalle (paso 12)
+                        // Paso 12: el diagnóstico también es obligatorio (devolución de los profesores)
             if (df.getCaras() == null || df.getCaras().isBlank()
-                    || df.getIdTipo() == null || df.getEstado() == null) {
-                throw new IllegalArgumentException("Seleccioná al menos una cara y completá tratamiento y estado.");
+                    || df.getIdTipo() == null || df.getEstado() == null
+                    || vacioANull(df.getDiagnostico()) == null) {
+                throw new IllegalArgumentException(
+                        "Seleccioná al menos una cara y completá tratamiento, estado y diagnóstico.");
             }
             if (df.getDiagnostico() != null && df.getDiagnostico().length() > 255) {
                 throw new IllegalArgumentException("El diagnóstico puede tener hasta 255 caracteres.");
