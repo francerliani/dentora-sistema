@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+    <!-- ===== MENÚ LATERAL =====
+         th:fragment="menu(activo)": es un "pedazo" reutilizable que recibe un parámetro:
+         el nombre de la sección actual, para marcarla como activa.
+         Cada opción solo aparece para los roles que pueden entrar (igual que SecurityConfig) -->
+    <aside th:fragment="menu(activo)" class="menu-lateral">
+        <img src="/img/logo.png" alt="Logo de Dentora" class="logo-menu">
+        <nav>
+            <a href="/inicio" th:classappend="${activo == 'inicio'} ? 'activo'">Inicio</a>
+
+            <a href="/pacientes" th:if="${usuarioRol == 'SECRETARIA' or usuarioRol == 'ADMINISTRADOR'}"
+               th:classappend="${activo == 'pacientes'} ? 'activo'">Pacientes</a>
+
+            <a href="/turnos" th:if="${usuarioRol == 'SECRETARIA' or usuarioRol == 'ADMINISTRADOR'}"
+               th:classappend="${activo == 'turnos'} ? 'activo'">Turnos</a>
+
+            <a href="/odontograma" th:if="${usuarioRol == 'ODONTOLOGO' or usuarioRol == 'ADMINISTRADOR'}"
+               th:classappend="${activo == 'odontograma'} ? 'activo'">Odontograma</a>
+
+            <a href="/configuracion" th:if="${usuarioRol == 'ADMINISTRADOR'}"
+               th:classappend="${activo == 'configuracion'} ? 'activo'">Configuración</a>
+
+            <a href="/reportes" th:if="${usuarioRol == 'ADMINISTRADOR'}"
+               th:classappend="${activo == 'reportes'} ? 'activo'">Reportes</a>
+        </nav>
+    </aside>
+
+    <!-- ===== BARRA SUPERIOR: usuario real + cerrar sesión ===== -->
+        <header th:fragment="barra" class="barra-superior">
+        <span>
+            <span th:text="${usuarioNombre}">Carlos Pérez</span> —
+            <strong th:text="${usuarioRolTexto}">Administrador</strong>
+        </span>
+        <form th:action="@{/logout}" method="post">
+            <button type="submit" class="boton-secundario">Cerrar sesión</button>
+        </form>
+    </header>
+
+</body>
+</html>
