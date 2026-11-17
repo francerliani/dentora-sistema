@@ -26,4 +26,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
     // Cuántos usuarios activos hay con un rol (para saber si es el único Administrador, 3d)
     long countByRol_NombreAndActivoTrue(String nombreRol);
+
+            // Usuarios activos de un rol, ordenados por nombre (CU-03, paso 2)
+    List<Usuario> findByRol_NombreAndActivoTrueOrderByNombre(String nombreRol);
 }

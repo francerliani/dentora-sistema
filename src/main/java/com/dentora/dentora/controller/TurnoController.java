@@ -42,7 +42,7 @@ public class TurnoController {
                          @RequestParam(required = false) LocalDate fecha,
                          Model model) {
 
-        List<Usuario> odontologos = usuarioRepository.findByRol_NombreAndActivoTrue("ODONTOLOGO");
+        List<Usuario> odontologos = usuarioRepository.findByRol_NombreAndActivoTrueOrderByNombre("ODONTOLOGO");
         if (fecha == null) {
             fecha = LocalDate.now();
         }
@@ -167,8 +167,8 @@ public class TurnoController {
 
     // ===== Listas para los desplegables del formulario =====
     private void cargarListasFormulario(Model model, Turno turno) {
-        model.addAttribute("pacientes", pacienteRepository.findByActivoTrue());   // solo activos (RN-05)
-        model.addAttribute("odontologos", usuarioRepository.findByRol_NombreAndActivoTrue("ODONTOLOGO"));
+        model.addAttribute("pacientes", pacienteRepository.findByActivoTrueOrderByApellidoAscNombreAsc());   // solo activos (RN-05)
+        model.addAttribute("odontologos", usuarioRepository.findByRol_NombreAndActivoTrueOrderByNombre("ODONTOLOGO"));
 
         // NUEVO (6a): solo las horas LIBRES de ese odontólogo en esa fecha
         List<LocalTime> horas = new ArrayList<>();
