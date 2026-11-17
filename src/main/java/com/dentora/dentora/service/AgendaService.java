@@ -8,6 +8,7 @@ import com.dentora.dentora.repository.DisponibilidadRepository;
 import com.dentora.dentora.repository.EstadoTurnoRepository;
 import com.dentora.dentora.repository.TurnoRepository;
 import org.springframework.stereotype.Service;
+import java.time.format.DateTimeFormatter;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -58,60 +59,90 @@ public class AgendaService {
     }
 
     // =========================================================
-    // NUEVO: VALIDAR UN TURNO ANTES DE GUARDARLO
+       // =========================================================
+    // VALIDAR UN TURNO ANTES DE GUARDARLO (CU-03, pasos 9 a 11)
     // Devuelve el mensaje de error, o null si está todo bien
     // =========================================================
     public String validarTurno(Turno turno) {
+        DateTimeFormatter hhmm = DateTimeFormatter.ofPattern("HH:mm");
+        DateTimeFormatter ddmm = DateTimeFormatter.ofPattern("dd/MM");
 
-        // 1) Campos obligatorios
+        // Campos obligatorios
         if (turno.getPaciente() == null)   return "Seleccione un paciente.";
         if (turno.getOdontologo() == null) return "Seleccione un odontólogo.";
         if (turno.getFecha() == null || turno.getHora() == null) return "Complete la fecha y la hora.";
 
-        // 2) Paciente activo (RN-05)
-        if (!turno.getPaciente().getActivo()) {
+        // Paso 9: paciente activo (RN-05)
+        if (!Boolean.TRUE.equals(turno.getPaciente().getActivo())) {
             return "El paciente está dado de baja y no puede recibir turnos.";
         }
 
-        // 3) Nada de fechas pasadas
-        if (turno.getFecha().isBefore(LocalDate.now())) {
-            return "No se pueden dar turnos en fechas pasadas.";
+        // Paso 9 / 9a: nada en el pasado. Si es HOY, la hora tiene que ser posterior a la actual (NUEVO)
+        LocalDate hoy = LocalDate.now();
+        boolean fechaPasada = turno.getFecha().isBefore(hoy);
+        boolean horaPasada = turno.getFecha().equals(hoy) && !turno.getHora().isAfter(LocalTime.now());
+        if (fechaPasada || horaPasada) {
+            return "No se pueden asignar turnos en fechas u horas pasadas.";
         }
 
         LocalTime inicio = turno.getHora();
-        LocalTime fin = turno.getHoraFin();   // inicio + duración
+        LocalTime fin = turno.getHoraFin();
 
-        // 4) Tiene que entrar COMPLETO dentro de una franja (RN-08)
-        boolean entraEnUnaFranja = false;
+        // Paso 9 / 9a: tiene que entrar COMPLETO en una franja (RN-08)
         List<Disponibilidad> franjas = disponibilidadRepository
                 .findByOdontologoAndDiaSemanaOrderByHoraInicio(turno.getOdontologo(), diaEnTexto(turno.getFecha()));
 
-        for (Disponibilidad franja : franjas) {
-            // "no empieza antes del inicio de la franja Y no termina después del fin"
-            if (!inicio.isBefore(franja.getHoraInicio()) && !fin.isAfter(franja.getHoraFin())) {
-                entraEnUnaFranja = true;
+        if (franjas.isEmpty()) {   // 4a: ese día no atiende
+            return "El odontólogo no atiende los días «" + nombreDia(turno.getFecha()) + "».";
+        }
+
+        // Buscamos la franja donde EMPIEZA el turno
+        Disponibilidad franja = null;
+        for (Disponibilidad f : franjas) {
+            if (!inicio.isBefore(f.getHoraInicio()) && inicio.isBefore(f.getHoraFin())) {
+                franja = f;
                 break;
             }
         }
-        if (!entraEnUnaFranja) {
-            return "El turno no entra en el horario de atención del odontólogo ese día.";
+        if (franja == null) {
+            return "El horario elegido está fuera de la atención del odontólogo.";
+        }
+        if (fin.isAfter(franja.getHoraFin())) {
+            return "El turno de " + turno.getDuracionHoras() + " horas excede el horario de atención del odontólogo (hasta las "
+                    + franja.getHoraFin().format(hhmm) + ").";
         }
 
-        // 5) No se puede superponer con otro turno (los cancelados no cuentan)
+        // Paso 10 / 10a: no se puede superponer con otro turno del MISMO odontólogo
         for (Turno otro : turnosActivos(turno.getOdontologo(), turno.getFecha())) {
-
-            // Al reprogramar, el turno no se compara consigo mismo
-            if (otro.getIdTurno().equals(turno.getIdTurno())) continue;
-
-            // Dos turnos se pisan si uno empieza antes de que el otro termine, y viceversa
+            if (otro.getIdTurno().equals(turno.getIdTurno())) continue;   // al reprogramar, no se compara consigo mismo
             if (inicio.isBefore(otro.getHoraFin()) && otro.getHora().isBefore(fin)) {
-                return "El horario se superpone con el turno de "
-                        + otro.getPaciente().getApellido() + " (" + otro.getHora()
-                        + " a " + otro.getHoraFin() + ").";
+                return "El horario de " + inicio.format(hhmm) + " a " + fin.format(hhmm)
+                        + " se superpone con otro turno. Elija otro horario o una duración menor.";
+            }
+        }
+
+        // NUEVO — Paso 11 / 11a: el PACIENTE no puede tener otro turno Pendiente a la misma hora
+        // (aunque sea con otro odontólogo)
+        for (Turno otro : turnoRepository.findByPacienteAndFechaAndEstado_Nombre(
+                turno.getPaciente(), turno.getFecha(), "Pendiente")) {
+            if (otro.getIdTurno().equals(turno.getIdTurno())) continue;
+            if (inicio.isBefore(otro.getHoraFin()) && otro.getHora().isBefore(fin)) {
+                return "El paciente ya tiene un turno el " + otro.getFecha().format(ddmm) + " a las "
+                        + otro.getHora().format(hhmm) + " con «" + otro.getOdontologo().getNombre() + "».";
             }
         }
 
         return null;   // todo bien
+    }
+
+    // "LUNES" → "Lunes", "MIERCOLES" → "Miércoles" (para los mensajes)
+    public String nombreDia(LocalDate fecha) {
+        String dia = diaEnTexto(fecha);
+        return switch (dia) {
+            case "MIERCOLES" -> "Miércoles";
+            case "SABADO"    -> "Sábado";
+            default          -> dia.charAt(0) + dia.substring(1).toLowerCase();
+        };
     }
 
     // =========================================================

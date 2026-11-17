@@ -23,7 +23,7 @@
 
           <section class="tarjeta tarjeta-form">
             <!-- CAMBIO: th:object conecta el formulario con el objeto "turno" -->
-            <form th:action="@{/turnos/guardar}" th:object="${turno}" method="post">
+            <form id="form-turno" th:action="@{/turnos/guardar}" th:object="${turno}" method="post">
 
               <input type="hidden" th:field="*{idTurno}" />
 
@@ -59,7 +59,7 @@
                   <div class="campo-ancho">
                     <label for="odontologo">Odontólogo *</label>
                     <!-- CAMBIO: name="odontologo" con el id; Spring busca el Usuario solo -->
-                    <select id="odontologo" name="odontologo" required>
+                    <select id="odontologo" name="odontologo" required onchange="recargarHoras()">
                       <option value="">Seleccionar...</option>
                       <option th:each="o : ${odontologos}"
                               th:value="${o.idUsuario}"
@@ -73,22 +73,23 @@
                   <div>
                     <label for="fecha">Fecha *</label>
                     <!-- min = hoy: el calendario no deja elegir fechas pasadas -->
-                    <input type="date" th:field="*{fecha}" required
+                    <input type="date" th:field="*{fecha}" required onchange="recargarHoras"
                            th:min="${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}" />
                   </div>
 
-                  <div>
+                                    <div>
                     <label for="hora">Hora *</label>
-                    <!-- CAMBIO: horas en punto generadas por el controlador -->
                     <select id="hora" name="hora" required>
-                      <option value="">Seleccionar...</option>
+                      <!-- Texto según el caso: falta elegir, no hay horarios, o hay -->
+                      <option value="" th:text="${!hayDatos} ? 'Elegí odontólogo y fecha'
+                                       : (${sinHorarios} ? 'Sin horarios libres' : 'Seleccionar...')">Seleccionar...</option>
                       <option th:each="h : ${horas}"
                               th:value="${#temporals.format(h, 'HH:mm')}"
                               th:text="${#temporals.format(h, 'HH:mm')}"
-                              th:selected="${turno.hora != null and turno.hora == h}">
-                        09:00
-                      </option>
+                              th:selected="${turno.hora != null and turno.hora == h}">15:00</option>
                     </select>
+                    <!-- 5a -->
+                    <p class="nota" th:if="${sinHorarios}">No hay horarios disponibles en esta fecha.</p>
                   </div>
 
                   <div>
@@ -119,5 +120,22 @@
         </main>
       </div>
     </div>
+      <script>
+    // Cuando cambian odontólogo o fecha, recarga la página para traer las horas libres.
+    // Manda también el paciente y la duración, para no perder lo que ya se completó.
+    function recargarHoras() {
+      const form = document.getElementById('form-turno');
+      const params = new URLSearchParams({
+        idOdontologo: form.elements['odontologo'].value,
+        fecha: form.elements['fecha'].value,
+        textoPaciente: form.elements['textoPaciente'].value,
+        duracion: form.elements['duracionHoras'].value
+      });
+      // Si tiene id es una reprogramación; si no, un turno nuevo
+      const idTurno = form.elements['idTurno'].value;
+      const base = idTurno ? '/turnos/reprogramar/' + idTurno : '/turnos/nuevo';
+      window.location = base + '?' + params.toString();
+    }
+  </script>
   </body>
 </html>

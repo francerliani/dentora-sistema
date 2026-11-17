@@ -45,9 +45,10 @@
             </div>
 
             <!-- CAMBIO: si ese día no tiene franjas, mostramos un aviso en vez de la tabla -->
-            <p th:if="${filas == null or #lists.isEmpty(filas)}">
-              El odontólogo no atiende ese día.
-            </p>
+            <p th:if="${filas == null or #lists.isEmpty(filas)}"
+   th:text="|El odontólogo no atiende los días «${diaTexto}».|">El odontólogo no atiende ese día.</p>
+             
+            
 
             <table th:unless="${filas == null or #lists.isEmpty(filas)}">
               <thead>

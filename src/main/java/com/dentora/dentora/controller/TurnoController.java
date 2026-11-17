@@ -1,5 +1,6 @@
 package com.dentora.dentora.controller;
 
+import com.dentora.dentora.model.FilaAgenda;
 import com.dentora.dentora.model.Paciente;
 import com.dentora.dentora.model.Turno;
 import com.dentora.dentora.model.Usuario;
@@ -24,7 +25,7 @@ import java.util.List;
 public class TurnoController {
 
     private final UsuarioRepository usuarioRepository;
-    private final PacienteRepository pacienteRepository;   // NUEVO
+    private final PacienteRepository pacienteRepository;
     private final AgendaService agendaService;
 
     public TurnoController(UsuarioRepository usuarioRepository,
@@ -35,14 +36,13 @@ public class TurnoController {
         this.agendaService = agendaService;
     }
 
-    // ===== AGENDA (igual que antes) =====
+    // ===== AGENDA =====
     @GetMapping("/turnos")
     public String agenda(@RequestParam(required = false) Integer idOdontologo,
                          @RequestParam(required = false) LocalDate fecha,
                          Model model) {
 
         List<Usuario> odontologos = usuarioRepository.findByRol_NombreAndActivoTrue("ODONTOLOGO");
-
         if (fecha == null) {
             fecha = LocalDate.now();
         }
@@ -57,6 +57,7 @@ public class TurnoController {
         model.addAttribute("odontologos", odontologos);
         model.addAttribute("odontologo", odontologo);
         model.addAttribute("fecha", fecha);
+        model.addAttribute("diaTexto", agendaService.nombreDia(fecha));   // NUEVO: para el mensaje 4a
 
         if (odontologo != null) {
             model.addAttribute("filas", agendaService.armarAgenda(odontologo, fecha));
@@ -64,101 +65,132 @@ public class TurnoController {
         return "turnos";
     }
 
-    // ===== NUEVO: abrir el formulario =====
-    // Desde "Asignar" llega precargado: /turnos/nuevo?idOdontologo=3&fecha=2026-11-09&hora=18:00
-    // Desde "+ Nuevo turno" llega solo con odontólogo y fecha
+    // ===== NUEVO TURNO: abrir el formulario =====
+    // Se vuelve a llamar cada vez que cambian odontólogo o fecha (para recargar las horas libres).
+    // textoPaciente y duracion viajan para no perder lo que ya se había completado.
     @GetMapping("/turnos/nuevo")
     public String nuevo(@RequestParam(required = false) Integer idOdontologo,
                         @RequestParam(required = false) LocalDate fecha,
                         @RequestParam(required = false) LocalTime hora,
+                        @RequestParam(required = false) String textoPaciente,
+                        @RequestParam(required = false) Integer duracion,
                         Model model) {
 
-        Turno turno = new Turno();   // duracionHoras ya arranca en 1
+        Turno turno = new Turno();
         if (idOdontologo != null) {
             turno.setOdontologo(usuarioRepository.findById(idOdontologo).orElse(null));
         }
         turno.setFecha(fecha != null ? fecha : LocalDate.now());
         turno.setHora(hora);
+        if (duracion != null) {
+            turno.setDuracionHoras(duracion);
+        }
 
         model.addAttribute("turno", turno);
-        model.addAttribute("textoPaciente", "");   // el buscador de paciente arranca vacío
-        cargarListasFormulario(model);
+        model.addAttribute("textoPaciente", textoPaciente != null ? textoPaciente : "");
+        cargarListasFormulario(model, turno);
         return "turno-form";
     }
 
-    // ===== NUEVO: guardar =====
+    // ===== GUARDAR =====
     @PostMapping("/turnos/guardar")
     public String guardar(@ModelAttribute Turno turno,
-                          @RequestParam String textoPaciente,   // ej: "30456789 - González, María"
+                          @RequestParam String textoPaciente,
                           Model model, RedirectAttributes redirect) {
 
-        // 1) Del texto del buscador nos quedamos con el DNI (lo que está antes del " - ")
+        // Del texto del buscador nos quedamos con el DNI (lo que está antes del " - ")
         String dni = textoPaciente.split(" - ")[0].trim();
         Paciente paciente = pacienteRepository.findByDni(dni).orElse(null);
         turno.setPaciente(paciente);
 
-        // 2) Validar todas las reglas
         String error = (paciente == null)
                 ? "No se encontró el paciente. Elíjalo de la lista de sugerencias."
                 : agendaService.validarTurno(turno);
 
         if (error != null) {
-            // Volvemos al formulario con lo que había escrito y el mensaje
             model.addAttribute("error", error);
             model.addAttribute("textoPaciente", textoPaciente);
-            cargarListasFormulario(model);
+            cargarListasFormulario(model, turno);
             return "turno-form";
         }
 
-        // 3) Guardar (queda Pendiente) y volver a la agenda de ese día
+        boolean esNuevo = (turno.getIdTurno() == null);
         agendaService.guardarTurno(turno);
-        redirect.addFlashAttribute("mensaje", "Turno guardado correctamente.");
+        redirect.addFlashAttribute("mensaje",
+                esNuevo ? "Turno asignado correctamente." : "Turno reprogramado correctamente.");
         return "redirect:/turnos?idOdontologo=" + turno.getOdontologo().getIdUsuario()
                 + "&fecha=" + turno.getFecha();
     }
-            // ===== NUEVO: REPROGRAMAR = abrir el formulario con los datos del turno =====
+
+        // ===== REPROGRAMAR: abrir el formulario con los datos del turno =====
+    // También recibe odontólogo/fecha nuevos cuando se cambian en el formulario
     @GetMapping("/turnos/reprogramar/{id}")
-    public String reprogramar(@PathVariable Integer id, Model model) {
-        Turno turno = agendaService.buscarTurno(id);
-        if (turno == null) {
+    public String reprogramar(@PathVariable Integer id,
+                              @RequestParam(required = false) Integer idOdontologo,
+                              @RequestParam(required = false) LocalDate fecha,
+                              @RequestParam(required = false) Integer duracion,
+                              Model model) {
+        Turno original = agendaService.buscarTurno(id);
+        if (original == null) {
             return "redirect:/turnos";
         }
 
-        // Armamos el texto del buscador igual que en las sugerencias: "DNI - Apellido, Nombre"
-        Paciente p = turno.getPaciente();
-        model.addAttribute("textoPaciente", p.getDni() + " - " + p.getApellido() + ", " + p.getNombre());
+        // Trabajamos sobre una COPIA, así no se modifica el turno guardado hasta tocar "Guardar"
+        Turno turno = new Turno();
+        turno.setIdTurno(original.getIdTurno());
+        turno.setPaciente(original.getPaciente());
+        turno.setOdontologo(idOdontologo != null
+                ? usuarioRepository.findById(idOdontologo).orElse(null) : original.getOdontologo());
+        turno.setFecha(fecha != null ? fecha : original.getFecha());
+        turno.setHora(fecha == null && idOdontologo == null ? original.getHora() : null);
+        turno.setDuracionHoras(duracion != null ? duracion : original.getDuracionHoras());
 
+        Paciente p = original.getPaciente();
+        model.addAttribute("textoPaciente", p.getDni() + " - " + p.getApellido() + ", " + p.getNombre());
         model.addAttribute("turno", turno);
-        cargarListasFormulario(model);
-        return "turno-form";   // el MISMO formulario del alta
+        cargarListasFormulario(model, turno);
+        return "turno-form";
     }
 
-    // ===== NUEVO: CANCELAR =====
-    // POST porque modifica datos (igual que "Dar de baja" en pacientes)
+    // ===== CANCELAR =====
     @PostMapping("/turnos/cancelar/{id}")
     public String cancelar(@PathVariable Integer id, RedirectAttributes redirect) {
         Turno turno = agendaService.cancelarTurno(id);
         if (turno == null) {
             return "redirect:/turnos";
         }
-
         redirect.addFlashAttribute("mensaje", "Turno de " + turno.getPaciente().getApellido()
                 + " cancelado. El horario quedó libre.");
-
-        // Volvemos a la agenda del mismo odontólogo y el mismo día
         return "redirect:/turnos?idOdontologo=" + turno.getOdontologo().getIdUsuario()
                 + "&fecha=" + turno.getFecha();
     }
-    // Listas para los desplegables del formulario
-    private void cargarListasFormulario(Model model) {
+
+    // ===== Listas para los desplegables del formulario =====
+    private void cargarListasFormulario(Model model, Turno turno) {
         model.addAttribute("pacientes", pacienteRepository.findByActivoTrue());   // solo activos (RN-05)
         model.addAttribute("odontologos", usuarioRepository.findByRol_NombreAndActivoTrue("ODONTOLOGO"));
 
-        // Horas en punto de 08:00 a 20:00 (bloques de 1 hora)
+        // NUEVO (6a): solo las horas LIBRES de ese odontólogo en esa fecha
         List<LocalTime> horas = new ArrayList<>();
-        for (int h = 8; h <= 20; h++) {
-            horas.add(LocalTime.of(h, 0));
+        boolean hayDatos = turno.getOdontologo() != null && turno.getFecha() != null;
+
+        if (hayDatos) {
+            for (FilaAgenda fila : agendaService.armarAgenda(turno.getOdontologo(), turno.getFecha())) {
+                // Al reprogramar, el horario del propio turno también se ofrece
+                boolean esElPropio = !fila.isLibre() && turno.getIdTurno() != null
+                        && turno.getIdTurno().equals(fila.getTurno().getIdTurno());
+                if (fila.isLibre() || esElPropio) {
+                    horas.add(fila.getHora());
+                }
+            }
+            // Si es hoy, se sacan las horas que ya pasaron
+            if (turno.getFecha().equals(LocalDate.now())) {
+                horas.removeIf(h -> !h.isAfter(LocalTime.now()));
+            }
         }
+
         model.addAttribute("horas", horas);
+        model.addAttribute("hayDatos", hayDatos);
+        model.addAttribute("sinHorarios", hayDatos && horas.isEmpty());   // 5a
     }
 }

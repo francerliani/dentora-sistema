@@ -37,4 +37,7 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer> {
 
         // Cuántos turnos de un paciente tienen un estado desde una fecha en adelante (CU-02, 3c)
     long countByPacienteAndEstado_NombreAndFechaGreaterThanEqual(Paciente paciente, String estado, LocalDate fecha);
+
+        // Turnos de un paciente en una fecha con un estado (para que no tenga dos turnos a la vez, CU-03 paso 11)
+    List<Turno> findByPacienteAndFechaAndEstado_Nombre(Paciente paciente, LocalDate fecha, String estado);
 }
