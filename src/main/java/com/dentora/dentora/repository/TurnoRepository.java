@@ -31,4 +31,7 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer> {
 
         // Turnos con un estado dentro de un rango de fechas (reporte de turnos atendidos)
     List<Turno> findByEstado_NombreAndFechaBetween(String estado, LocalDate desde, LocalDate hasta);
+
+        // Todos los turnos de una fecha, ordenados por hora (inicio de secretaria y admin)
+    List<Turno> findByFechaOrderByHora(LocalDate fecha);
 }

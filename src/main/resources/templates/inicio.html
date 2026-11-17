@@ -8,33 +8,26 @@
 </head>
 
 <body>
-    <!-- Sin class="pagina-login": esta página NO se centra -->
-
     <div class="layout">
-        <!-- Contenedor general: pone el menú y el contenido uno al lado del otro -->
 
-                <!-- ================= MENÚ LATERAL ================= -->
-       <aside th:replace="~{fragmentos :: menu('inicio')}"></aside>
+        <!-- Menú lateral: sale de fragmentos.html -->
+        <aside th:replace="~{fragmentos :: menu('inicio')}"></aside>
 
-        <!-- ================= CONTENIDO ================= -->
         <div class="contenido">
 
+            <!-- Barra superior: sale de fragmentos.html -->
             <header th:replace="~{fragmentos :: barra}"></header>
-            
 
             <main class="area-principal">
                 <h1 th:text="|Hola, ${primerNombre}|">Hola, Carlos</h1>
                 <p>Este es el resumen del día.</p>
 
                 <section class="tarjeta">
-                    <!-- <section> = bloque temático dentro de la página -->
                     <h2>Turnos de hoy</h2>
 
                     <table>
-                        <!-- Tabla de datos. <thead> = encabezados, <tbody> = filas de datos -->
                         <thead>
                             <tr>
-                                <!-- <tr> = fila, <th> = celda de encabezado -->
                                 <th>Hora</th>
                                 <th>Paciente</th>
                                 <th>Odontólogo</th>
@@ -42,24 +35,22 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <!-- <td> = celda de dato. Datos inventados para la maqueta -->
-                                <td>09:00</td>
-                                <td>María González</td>
-                                <td>Dr. Juan Gaite</td>
-                                <td><span class="estado estado-atendido">Atendido</span></td>
+                            <!-- CAMBIO: una fila por cada turno de hoy que mandó el controlador
+                                 (el odontólogo ve solo los suyos; secretaria y admin, todos) -->
+                            <tr th:each="t : ${turnosHoy}">
+                                <td th:text="${#temporals.format(t.hora, 'HH:mm')}">09:00</td>
+                                <td th:text="|${t.paciente.nombre} ${t.paciente.apellido}|">María González</td>
+                                <td th:text="${t.odontologo.nombre}">Juan Gaite</td>
+                                <td>
+                                    <!-- La clase del color sale del nombre del estado:
+                                         Pendiente → estado-pendiente, Atendido → estado-atendido -->
+                                    <span class="estado"
+                                          th:classappend="${'estado-' + #strings.toLowerCase(t.estado.nombre)}"
+                                          th:text="${t.estado.nombre}">Pendiente</span>
+                                </td>
                             </tr>
-                            <tr>
-                                <td>10:30</td>
-                                <td>Lucas Fernández</td>
-                                <td>Dr. Juan Gaite</td>
-                                <td><span class="estado estado-pendiente">Pendiente</span></td>
-                            </tr>
-                            <tr>
-                                <td>11:15</td>
-                                <td>Ana Rodríguez</td>
-                                <td>Dra. Laura Méndez</td>
-                                <td><span class="estado estado-cancelado">Cancelado</span></td>
+                            <tr th:if="${#lists.isEmpty(turnosHoy)}">
+                                <td colspan="4">No hay turnos para hoy.</td>
                             </tr>
                         </tbody>
                     </table>

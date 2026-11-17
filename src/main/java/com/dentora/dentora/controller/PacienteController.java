@@ -99,7 +99,17 @@ public class PacienteController {
     @PostMapping("/pacientes/guardar")
     public String guardar(@ModelAttribute Paciente paciente, Model model,
                           RedirectAttributes redirect) {
+        
+        // Limpieza del DNI: se sacan puntos y espacios ("35.000 205" → "35000205")
+        String dni = (paciente.getDni() == null) ? "" : paciente.getDni().replaceAll("[.\\s]", "");
+        paciente.setDni(dni);
 
+        // Tiene que quedar con 7 u 8 números
+        if (!dni.matches("\\d{7,8}")) {
+            model.addAttribute("error", "El DNI debe tener 7 u 8 números, sin puntos ni espacios.");
+            cargarCatalogos(model);
+            return "paciente-form";
+        }
         // 1) Regla de negocio: el DNI no se puede repetir
         boolean dniRepetido = (paciente.getIdPaciente() == null)
                 ? pacienteRepository.existsByDni(paciente.getDni())
