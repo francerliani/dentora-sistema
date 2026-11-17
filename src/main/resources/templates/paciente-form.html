@@ -23,7 +23,14 @@
                 
                 <!-- Solo aparece si el controlador mandó un error (ej: DNI repetido) -->
                 <p class="mensaje-error" th:if="${error}" th:text="${error}">Error</p>
+                <!-- 8b: botón para reactivar. Está FUERA del formulario principal (no se pueden anidar formularios) -->
+<form th:if="${reactivarId != null}" th:action="@{/pacientes/reactivar/{id}(id=${reactivarId})}"
+      method="post" style="margin-bottom:16px">
+    <button type="submit" class="boton-principal">Sí, reactivarlo</button>
+</form>
 
+<!-- Mensaje verde (por ejemplo, después de reactivar) -->
+<p class="mensaje-exito" th:if="${mensaje}" th:text="${mensaje}">Guardado</p>
                 <section class="tarjeta tarjeta-form">
 
                     <!-- CAMBIO: th:object conecta el formulario con el objeto "paciente" del controlador.

@@ -21,6 +21,7 @@
 
             <!-- Aparece una sola vez, después de guardar -->
             <p class="mensaje-exito" th:if="${mensaje}" th:text="${mensaje}">Guardado</p>
+            <p class="mensaje-error" th:if="${error}" th:text="${error}">Error</p>
           <section class="tarjeta">
             <div class="barra-acciones">
               <!-- Buscador a la izquierda, botón de alta a la derecha -->

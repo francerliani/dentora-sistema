@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.authentication.DisabledException;
 
 @Configuration
 public class SecurityConfig {
@@ -44,13 +45,15 @@ public class SecurityConfig {
                         .loginPage("/login")
                         .defaultSuccessUrl("/inicio", true)
                         // NUEVO: decide a dónde volver cuando el login falla
-                        .failureHandler((request, response, exception) -> {
-                            if (exception instanceof LockedException) {
-                                response.sendRedirect("/login?bloqueado"); // cuenta bloqueada
-                            } else {
-                                response.sendRedirect("/login?error"); // usuario o contraseña incorrectos
-                            }
-                        })
+                                .failureHandler((request, response, exception) -> {
+                 if (exception instanceof LockedException) {
+                response.sendRedirect("/login?bloqueado");     // 5 intentos fallidos (6b)
+                 } else if (exception instanceof DisabledException) {
+                response.sendRedirect("/login?desactivada");   // NUEVO: activo = false (6a)
+                } else {
+                response.sendRedirect("/login?error");         // usuario o contraseña incorrectos
+                  }
+                })
                         .permitAll())
                 // 3. El CIERRE DE SESIÓN
                 .logout(logout -> logout

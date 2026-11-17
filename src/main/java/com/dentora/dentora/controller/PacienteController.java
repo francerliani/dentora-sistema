@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
+import com.dentora.dentora.repository.TurnoRepository;
+import java.time.LocalDate;
+
 
 @Controller
 public class PacienteController {
@@ -21,13 +24,16 @@ public class PacienteController {
     private final PacienteRepository pacienteRepository;
     private final SexoRepository sexoRepository;             // para el select de Sexo
     private final ObraSocialRepository obraSocialRepository; // para el select de Obra social
+    private final TurnoRepository turnoRepository;   // NUEVO: para controlar turnos pendientes
 
-    public PacienteController(PacienteRepository pacienteRepository,
+        public PacienteController(PacienteRepository pacienteRepository,
                               SexoRepository sexoRepository,
-                              ObraSocialRepository obraSocialRepository) {
+                              ObraSocialRepository obraSocialRepository,
+                              TurnoRepository turnoRepository) {
         this.pacienteRepository = pacienteRepository;
         this.sexoRepository = sexoRepository;
         this.obraSocialRepository = obraSocialRepository;
+        this.turnoRepository = turnoRepository;
     }
 
         // ===== LISTADO + BUSCADOR + FILTRO POR OBRA SOCIAL =====
@@ -96,59 +102,95 @@ public class PacienteController {
 
     // ===== GUARDAR: sirve para alta y para edición =====
     // Sin id → save() hace INSERT (nuevo). Con id → save() hace UPDATE (modifica).
+       // ===== GUARDAR: alta y edición =====
     @PostMapping("/pacientes/guardar")
     public String guardar(@ModelAttribute Paciente paciente, Model model,
                           RedirectAttributes redirect) {
-        
+
         // Limpieza del DNI: se sacan puntos y espacios ("35.000 205" → "35000205")
         String dni = (paciente.getDni() == null) ? "" : paciente.getDni().replaceAll("[.\\s]", "");
         paciente.setDni(dni);
 
-        // Tiene que quedar con 7 u 8 números
+        // Tiene que quedar con 7 u 8 números (7a)
         if (!dni.matches("\\d{7,8}")) {
             model.addAttribute("error", "El DNI debe tener 7 u 8 números, sin puntos ni espacios.");
             cargarCatalogos(model);
             return "paciente-form";
         }
-        // 1) Regla de negocio: el DNI no se puede repetir
-        boolean dniRepetido = (paciente.getIdPaciente() == null)
-                ? pacienteRepository.existsByDni(paciente.getDni())
-                : pacienteRepository.existsByDniAndIdPacienteNot(paciente.getDni(), paciente.getIdPaciente());
 
-        if (dniRepetido) {
-            // Volvemos al formulario con los datos cargados y un mensaje de error
-            model.addAttribute("error", "Ya existe un paciente con el DNI " + paciente.getDni() + ".");
-            cargarCatalogos(model);
-            return "paciente-form";
+        if (paciente.getIdPaciente() == null) {
+            // ===== ALTA: ¿ya existe alguien con ese DNI? =====
+            Paciente existente = pacienteRepository.findByDni(dni).orElse(null);
+            if (existente != null) {
+                if (Boolean.TRUE.equals(existente.getActivo())) {
+                    // 8a: es un paciente activo → no se puede repetir
+                    model.addAttribute("error", "Ya existe un paciente con ese DNI.");
+                } else {
+                    // 8b: es un paciente dado de baja → se ofrece reactivarlo
+                    model.addAttribute("error", "El DNI corresponde a un paciente dado de baja. ¿Desea reactivarlo?");
+                    model.addAttribute("reactivarId", existente.getIdPaciente());
+                }
+                cargarCatalogos(model);
+                return "paciente-form";
+            }
+        } else {
+            // ===== EDICIÓN: el DNI no puede ser el de OTRO paciente =====
+            if (pacienteRepository.existsByDniAndIdPacienteNot(dni, paciente.getIdPaciente())) {
+                model.addAttribute("error", "Ya existe un paciente con ese DNI.");
+                cargarCatalogos(model);
+                return "paciente-form";
+            }
         }
 
-        // 2) Guardar. Por el cascade, también se guarda la dirección.
+        // Guardar. Por el cascade, también se guarda la dirección.
+        pacienteRepository.save(paciente);
+        redirect.addFlashAttribute("mensaje", "Paciente guardado correctamente.");
+        return "redirect:/pacientes";
+    }
+
+    // ===== NUEVO: reactivar un paciente dado de baja (8b) =====
+    @PostMapping("/pacientes/reactivar/{id}")
+    public String reactivar(@PathVariable Integer id, RedirectAttributes redirect) {
+        Paciente paciente = pacienteRepository.findById(id).orElse(null);
+        if (paciente == null) {
+            return "redirect:/pacientes";
+        }
+
+        paciente.setActivo(true);
         pacienteRepository.save(paciente);
 
-        // 3) Mensaje que se muestra una sola vez en el listado
-        redirect.addFlashAttribute("mensaje", "Paciente guardado correctamente.");
-
-        // 4) Redirigir al listado (así, si recargan, no se guarda dos veces)
-        return "redirect:/pacientes";
+        // Abre su formulario de edición (3a) para que actualicen los datos
+        redirect.addFlashAttribute("mensaje", "Paciente reactivado. Revisá y actualizá sus datos.");
+        return "redirect:/pacientes/editar/" + id;
     }
 
     // ===== DAR DE BAJA (baja lógica) =====
 // Es POST y no GET porque MODIFICA datos: así nadie da de baja
 // a un paciente solo por abrir un link
-@PostMapping("/pacientes/baja/{id}")
-public String darDeBaja(@PathVariable Integer id, RedirectAttributes redirect) {
+    // ===== DAR DE BAJA (baja lógica) =====
+    @PostMapping("/pacientes/baja/{id}")
+    public String darDeBaja(@PathVariable Integer id, RedirectAttributes redirect) {
 
-    Paciente paciente = pacienteRepository.findById(id).orElse(null);
+        Paciente paciente = pacienteRepository.findById(id).orElse(null);
+        if (paciente == null) {
+            return "redirect:/pacientes";
+        }
 
-    if (paciente != null) {
+        // NUEVO (3c): si tiene turnos Pendientes de hoy en adelante, no se puede dar de baja
+        long pendientes = turnoRepository
+                .countByPacienteAndEstado_NombreAndFechaGreaterThanEqual(paciente, "Pendiente", LocalDate.now());
+        if (pendientes > 0) {
+            redirect.addFlashAttribute("error", "El paciente tiene " + pendientes
+                    + " turnos pendientes. Cancélelos antes de darlo de baja.");
+            return "redirect:/pacientes";
+        }
+
         paciente.setActivo(false);          // no se borra, se desactiva
         pacienteRepository.save(paciente);  // UPDATE en la base
         redirect.addFlashAttribute("mensaje",
                 "Paciente " + paciente.getApellido() + ", " + paciente.getNombre() + " dado de baja.");
+        return "redirect:/pacientes";
     }
-
-    return "redirect:/pacientes";
-}
 
     // Manda a la página las listas para los dos <select>
     private void cargarCatalogos(Model model) {

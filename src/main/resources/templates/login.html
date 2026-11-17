@@ -23,7 +23,10 @@
       <div class="mensaje-error" th:if="${param.bloqueado}">
         Cuenta bloqueada por 5 intentos fallidos. Contacte al administrador.
       </div>
-
+      <!-- Aparece cuando la dirección es /login?desactivada (CU-01, 6a) -->
+      <div class="mensaje-error" th:if="${param.desactivada}">
+        Cuenta desactivada. Contacte al Administrador.
+      </div>
       <!-- Solo aparece después de cerrar sesión (Spring redirige a /login?logout) -->
       <div class="mensaje-exito" th:if="${param.logout}">
         Cerraste sesión correctamente.
