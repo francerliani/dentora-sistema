@@ -21,8 +21,7 @@
             <header th:replace="~{fragmentos :: barra}"></header>
 
             <main class="area-principal">
-                <h1>Reportes y estadísticas</h1>
-
+                <h1 th:text="${esOdontologo} ? 'Mis reportes' : 'Reportes y estadísticas'">Reportes y estadísticas</h1>
                 <!-- ===== FILTRO DEL PERÍODO ===== -->
                 <section class="tarjeta">
                     <form class="filtros" action="/reportes" method="get">
@@ -55,7 +54,7 @@
 
                 <!-- ===== 1) TURNOS ATENDIDOS POR ODONTÓLOGO ===== -->
                 <section class="tarjeta">
-                    <h2>Turnos atendidos por odontólogo</h2>
+                    <h2 th:text="${esOdontologo} ? 'Mis turnos atendidos' : 'Turnos atendidos por odontólogo'">Turnos atendidos por odontólogo</h2>
                     <table>
                         <thead>
                             <tr><th>Odontólogo</th><th>Turnos atendidos</th><th style="width:40%"></th></tr>
@@ -77,8 +76,8 @@
                 </section>
 
                                 <!-- ===== 2) PACIENTES POR OBRA SOCIAL ===== -->
-                <section class="tarjeta">
-                    <h2>Pacientes por obra social</h2>
+                <section class="tarjeta" th:unless="${esOdontologo}">
+                    <h2 th:text="${esOdontologo} ? 'Mi facturación' : 'Facturación por odontólogo'">Facturación por odontólogo</h2>
                     <p class="nota">Pacientes activos a la fecha (no depende del período elegido).</p>
                     <table>
                         <thead>
@@ -102,9 +101,8 @@
                     <p class="nota">Suma de los precios de los tratamientos realizados en el período.</p>
 
                     <!-- El primero de la lista es el que más facturó (vienen ordenados de mayor a menor) -->
-                    <p th:if="${!#lists.isEmpty(facturacion)}"
-                       th:text="|Mayor facturación: ${facturacion[0].etiqueta}|">Mayor facturación: Juan Gaite</p>
-
+                    <p th:if="${!esOdontologo and !#lists.isEmpty(facturacion)}"
+   th:text="|Mayor facturación: ${facturacion[0].etiqueta}|">Mayor facturación: Juan Gaite</p>
                     <table>
                         <thead>
                             <tr><th>Odontólogo</th><th>Tratamientos realizados</th><th>Facturado</th><th style="width:30%"></th></tr>

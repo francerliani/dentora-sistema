@@ -249,7 +249,7 @@
                                                 26 (Oclusal): Obturación —
                                             </span>
                                             <span class="estado"
-                                                  th:classappend="${d.estado.nombre == 'Realizado'} ? 'estado-atendido' : 'estado-cancelado'"
+                                                  th:classappend="${d.estado.nombre == 'Realizado'} ? 'estado-realizado' : 'estado-a-realizar'"
                                                   th:text="${d.estado.nombre}">Realizado</span>
                                         </div>
                                         <!-- RN-17: una consulta puede no tener tratamientos -->

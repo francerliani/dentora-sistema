@@ -9,6 +9,7 @@ import com.dentora.dentora.repository.PacienteRepository;
 import com.dentora.dentora.repository.TurnoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.dentora.dentora.model.Usuario;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -33,16 +34,36 @@ public class ReporteService {
         this.detalleRepository = detalleRepository;
     }
 
-    // 1) Cuántos turnos ATENDIDOS tuvo cada odontólogo en el período
+        // 1) Turnos ATENDIDOS por odontólogo en el período.
+    //    soloDe = null → todos (Administrador); soloDe = un odontólogo → solo los suyos
     @Transactional(readOnly = true)
-    public List<FilaReporte> turnosAtendidos(LocalDate desde, LocalDate hasta) {
+    public List<FilaReporte> turnosAtendidos(LocalDate desde, LocalDate hasta, Usuario soloDe) {
         Map<String, FilaReporte> filas = new LinkedHashMap<>();
         for (Turno t : turnoRepository.findByEstado_NombreAndFechaBetween("Atendido", desde, hasta)) {
-            // computeIfAbsent: si el odontólogo no tiene fila todavía, la crea
+            if (soloDe != null && !t.getOdontologo().getIdUsuario().equals(soloDe.getIdUsuario())) {
+                continue;   // es de otro odontólogo: no se cuenta
+            }
             filas.computeIfAbsent(t.getOdontologo().getNombre(), FilaReporte::new)
                  .sumar(BigDecimal.ZERO);
         }
         return ordenar(filas, false);
+    }
+
+    // 3) Facturación: suma de los precios de los tratamientos REALIZADOS.
+    //    Mismo criterio de soloDe que el reporte de turnos
+    @Transactional(readOnly = true)
+    public List<FilaReporte> facturacion(LocalDate desde, LocalDate hasta, Usuario soloDe) {
+        Map<String, FilaReporte> filas = new LinkedHashMap<>();
+        for (DetalleTratamiento d : detalleRepository
+                .findByEstado_NombreAndConsulta_FechaBetween("Realizado", desde, hasta)) {
+            Usuario odontologo = d.getConsulta().getOdontologo();
+            if (soloDe != null && !odontologo.getIdUsuario().equals(soloDe.getIdUsuario())) {
+                continue;
+            }
+            filas.computeIfAbsent(odontologo.getNombre(), FilaReporte::new)
+                 .sumar(d.getTipoTratamiento().getPrecio());
+        }
+        return ordenar(filas, true);
     }
 
     // 2) Cuántos pacientes ACTIVOS tiene cada obra social (los que no tienen = "Particular")

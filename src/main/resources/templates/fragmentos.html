@@ -23,8 +23,9 @@
             <a href="/configuracion" th:if="${usuarioRol == 'ADMINISTRADOR'}"
                th:classappend="${activo == 'configuracion'} ? 'activo'">Configuración</a>
 
-            <a href="/reportes" th:if="${usuarioRol == 'ADMINISTRADOR'}"
-               th:classappend="${activo == 'reportes'} ? 'activo'">Reportes</a>
+            <a href="/reportes" th:if="${usuarioRol == 'ADMINISTRADOR' or usuarioRol == 'ODONTOLOGO'}"
+   th:classappend="${activo == 'reportes'} ? 'activo'"
+   th:text="${usuarioRol == 'ODONTOLOGO'} ? 'Mis reportes' : 'Reportes'">Reportes</a>
         </nav>
     </aside>
 

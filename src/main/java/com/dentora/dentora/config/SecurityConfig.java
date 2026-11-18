@@ -36,8 +36,8 @@ public class SecurityConfig {
 
                         // Configuración: solo Administrador
                         .requestMatchers("/configuracion/**").hasRole("ADMINISTRADOR")
-                        //Reportes, solo Administrador
-                        .requestMatchers("/reportes", "/reportes/**").hasRole("ADMINISTRADOR")
+                        // Reportes: el Administrador ve todo; el Odontólogo, solo sus propios datos
+                        .requestMatchers("/reportes", "/reportes/**").hasAnyRole("ADMINISTRADOR", "ODONTOLOGO")
                         
                         .anyRequest().authenticated())
                 // 2. El LOGIN

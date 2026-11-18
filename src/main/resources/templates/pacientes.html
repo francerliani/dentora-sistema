@@ -83,7 +83,8 @@
                     <a th:href="@{/pacientes/editar/{id}(id=${p.idPaciente})}" class="boton-chico">Editar</a>
                     <form th:action="@{/pacientes/baja/{id}(id=${p.idPaciente})}" method="post" style="display:inline">
                     <button type="submit" class="boton-chico boton-peligro"
-                     onclick="return confirm('¿Dar de baja a este paciente?')">Dar de baja</button>
+                      th:data-nombre="|${p.apellido}, ${p.nombre}|"
+                      onclick="return confirm('¿Dar de baja a ' + this.dataset.nombre + '? Su historia clínica se conserva.')">Dar de baja</button>
                      </form>
                     </td>
                 </tr>

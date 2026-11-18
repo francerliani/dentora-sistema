@@ -483,9 +483,10 @@ legend {
     fill: #e0f6fb;           /* celeste muy claro al pasar el mouse */
 }
 
-/* Colores según EstadoTratamiento (van después del hover para tener prioridad) */
-.cara.a-realizar { fill: #e53935; }   /* rojo */
-.cara.realizado  { fill: #1e5bd8; }   /* azul */
+/* Colores según EstadoTratamiento (van después del hover para tener prioridad)
+   Azul = A realizar (pendiente) · Rojo = Realizado (ya hecho) */
+.cara.a-realizar { fill: #1e5bd8; }   /* azul */
+.cara.realizado  { fill: #e53935; }   /* rojo */
 
 .cara.seleccionada {
     stroke: var(--celeste);
@@ -508,8 +509,12 @@ legend {
     margin-right: 6px;
 }
 
-.muestra-a-realizar { background-color: #e53935; }
-.muestra-realizado  { background-color: #1e5bd8; }
+.muestra-a-realizar { background-color: #1e5bd8; }   /* azul */
+.muestra-realizado  { background-color: #e53935; }   /* rojo */
+
+/* Etiquetas del historial clínico: mismos colores que el odontograma */
+.estado-a-realizar { background-color: #E3ECFB; color: #1e5bd8; }   /* azul */
+.estado-realizado  { background-color: #FDE7E7; color: #e53935; }   /* rojo */
 
 /* =========================================================
    13. CONSULTA E HISTORIAL

@@ -104,7 +104,8 @@
                 <!-- Formulario chiquito POST, con confirmación (igual que Dar de baja) -->
                     <form th:action="@{/turnos/cancelar/{id}(id=${f.turno.idTurno})}" method="post" style="display:inline">
                     <button type="submit" class="boton-chico boton-peligro"
-                        onclick="return confirm('¿Cancelar este turno?')">Cancelar</button>
+        th:data-texto="|${f.turno.paciente.apellido}, ${f.turno.paciente.nombre} del ${#temporals.format(f.turno.fecha, 'dd/MM')} a las ${#temporals.format(f.hora, 'HH:mm')}|"
+        onclick="return confirm('¿Cancelar el turno de ' + this.dataset.texto + '?')">Cancelar</button>
                     </form>
                     </td>
                       <a href="#" class="boton-chico">Reprogramar</a>
