@@ -18,6 +18,7 @@
         <main class="area-principal">
           <h1>Agenda de turnos</h1>
             <p class="mensaje-exito" th:if="${mensaje}" th:text="${mensaje}">Guardado</p>
+            <p class="mensaje-error" th:if="${error}" th:text="${error}">Error</p>
           <section class="tarjeta">
             <div class="barra-acciones">
               <form class="filtros" action="/turnos" method="get">
@@ -104,12 +105,18 @@
                 <!-- Formulario chiquito POST, con confirmación (igual que Dar de baja) -->
                     <form th:action="@{/turnos/cancelar/{id}(id=${f.turno.idTurno})}" method="post" style="display:inline">
                     <button type="submit" class="boton-chico boton-peligro"
-        th:data-texto="|${f.turno.paciente.apellido}, ${f.turno.paciente.nombre} del ${#temporals.format(f.turno.fecha, 'dd/MM')} a las ${#temporals.format(f.hora, 'HH:mm')}|"
-        onclick="return confirm('¿Cancelar el turno de ' + this.dataset.texto + '?')">Cancelar</button>
+                   th:data-texto="|${f.turno.paciente.apellido}, ${f.turno.paciente.nombre} del ${#temporals.format(f.turno.fecha, 'dd/MM')} a las ${#temporals.format(f.hora, 'HH:mm')}|"
+                    onclick="return confirm('¿Cancelar el turno de ' + this.dataset.texto + '?')">Cancelar</button>
                     </form>
                     </td>
                       <a href="#" class="boton-chico">Reprogramar</a>
                       <button type="button" class="boton-chico boton-peligro">Cancelar</button>
+                        <!-- NUEVO: solo aparece si el turno ya empezó -->
+                     <form th:if="${f.turno.comenzado}"
+                       th:action="@{/turnos/ausente/{id}(id=${f.turno.idTurno})}" method="post" style="display:inline">
+                     <button type="submit" class="boton-chico"
+                     onclick="return confirm('¿Marcar este turno como ausente?')">Ausente</button>
+                    </form>
                     </td>
                     <td th:unless="${f.turno.estado.nombre == 'Pendiente'}" class="sin-acciones">—</td>
                   </tr>

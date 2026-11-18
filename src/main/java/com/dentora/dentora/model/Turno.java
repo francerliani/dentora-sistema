@@ -3,7 +3,7 @@ package com.dentora.dentora.model;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
-
+import java.time.LocalDateTime;
 @Entity
 @Table(name = "turno")
 public class Turno {
@@ -44,6 +44,11 @@ public class Turno {
     // No se guarda en la base: se calcula (por eso no tiene @Column)
     public LocalTime getHoraFin() {
         return hora.plusHours(duracionHoras);
+    }
+        // ¿El turno ya empezó? (fecha y hora de inicio anteriores a este momento)
+    // No se guarda en la base: se calcula (por eso no tiene @Column)
+    public boolean isComenzado() {
+        return !LocalDateTime.of(fecha, hora).isAfter(LocalDateTime.now());
     }
 
     public Integer getIdTurno() { return idTurno; }

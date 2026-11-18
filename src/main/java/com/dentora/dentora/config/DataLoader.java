@@ -145,6 +145,11 @@ public class DataLoader implements CommandLineRunner {
             estadoTurnoRepository.save(new EstadoTurno("Cancelado"));
             System.out.println(">>> Catálogo de estados de turno cargado");
         }
+                // NUEVO: estado "Ausente" (se agrega aunque los otros estados ya existan)
+        if (estadoTurnoRepository.findByNombre("Ausente").isEmpty()) {
+            estadoTurnoRepository.save(new EstadoTurno("Ausente"));
+            System.out.println(">>> Estado de turno 'Ausente' agregado");
+        }
 
                 // NUEVO: las 32 piezas permanentes FDI.
         // Cuadrantes 1 a 4 (sup. der., sup. izq., inf. izq., inf. der.) × piezas 1 a 8

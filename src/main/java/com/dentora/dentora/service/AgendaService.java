@@ -204,4 +204,24 @@ public class AgendaService {
         }
         return turno;
     }
+
+        // =========================================================
+    // NUEVO: MARCAR AUSENTE (el paciente no vino)
+    // Solo turnos Pendientes que ya empezaron. Devuelve el mensaje de error, o null si salió bien
+    // =========================================================
+    public String marcarAusente(Integer idTurno) {
+        Turno turno = turnoRepository.findById(idTurno).orElse(null);
+        if (turno == null) {
+            return "El turno no existe.";
+        }
+        if (!turno.getEstado().getNombre().equals("Pendiente")) {
+            return "Solo se pueden marcar como ausentes los turnos pendientes.";
+        }
+        if (!turno.isComenzado()) {
+            return "Todavía no es la hora del turno: no se puede marcar como ausente.";
+        }
+        turno.setEstado(estadoTurnoRepository.findByNombre("Ausente").orElseThrow());
+        turnoRepository.save(turno);
+        return null;
+    }
 }

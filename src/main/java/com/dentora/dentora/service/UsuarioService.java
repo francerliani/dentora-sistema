@@ -135,6 +135,32 @@ public class UsuarioService {
         usuarioRepository.save(u);
     }
 
+        // =========================================================
+    // NUEVO: CAMBIAR MI CONTRASEÑA (cualquier usuario, la suya)
+    // =========================================================
+    public void cambiarContrasena(String usuarioSesion, String actual, String nueva, String repetir) {
+        Usuario u = usuarioRepository.findByUsuario(usuarioSesion).orElseThrow();
+
+        // 1) La actual tiene que ser correcta. matches() compara el texto con el hash BCrypt
+        if (actual == null || !passwordEncoder.matches(actual, u.getContrasena())) {
+            throw new IllegalArgumentException("La contraseña actual no es correcta.");
+        }
+        // 2) Mismo formato que en el alta de usuarios
+        if (nueva == null || !nueva.matches("(?=.*[A-Za-z])(?=.*\\d).{8,}")) {
+            throw new IllegalArgumentException("La contraseña debe tener al menos 8 caracteres, con letras y números.");
+        }
+        if (!nueva.equals(repetir)) {
+            throw new IllegalArgumentException("Las contraseñas no coinciden.");
+        }
+        if (passwordEncoder.matches(nueva, u.getContrasena())) {
+            throw new IllegalArgumentException("La nueva contraseña tiene que ser distinta de la actual.");
+        }
+
+        // 3) Se guarda el hash, nunca la contraseña tal cual (RN-01)
+        u.setContrasena(passwordEncoder.encode(nueva));
+        usuarioRepository.save(u);
+    }
+
     // 3d: ¿es el Administrador en sesión, o el único Administrador activo?
     // (public porque la página también lo usa para ocultar el botón Desactivar)
     public boolean esProtegido(Usuario u, String usuarioSesion) {

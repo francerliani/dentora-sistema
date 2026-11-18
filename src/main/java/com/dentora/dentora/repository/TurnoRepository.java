@@ -40,4 +40,7 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer> {
 
         // Turnos de un paciente en una fecha con un estado (para que no tenga dos turnos a la vez, CU-03 paso 11)
     List<Turno> findByPacienteAndFechaAndEstado_Nombre(Paciente paciente, LocalDate fecha, String estado);
+
+        // Todos los turnos de un paciente, del más nuevo al más viejo (página "Turnos del paciente")
+    List<Turno> findByPacienteOrderByFechaDescHoraDesc(Paciente paciente);
 }

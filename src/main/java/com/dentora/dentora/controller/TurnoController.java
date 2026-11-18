@@ -165,6 +165,25 @@ public class TurnoController {
                 + "&fecha=" + turno.getFecha();
     }
 
+        // ===== NUEVO: MARCAR AUSENTE =====
+    @PostMapping("/turnos/ausente/{id}")
+    public String marcarAusente(@PathVariable Integer id, RedirectAttributes redirect) {
+        Turno turno = agendaService.buscarTurno(id);
+        if (turno == null) {
+            return "redirect:/turnos";
+        }
+
+        String error = agendaService.marcarAusente(id);
+        if (error != null) {
+            redirect.addFlashAttribute("error", error);
+        } else {
+            redirect.addFlashAttribute("mensaje", "Turno de " + turno.getPaciente().getApellido()
+                    + " marcado como ausente.");
+        }
+        return "redirect:/turnos?idOdontologo=" + turno.getOdontologo().getIdUsuario()
+                + "&fecha=" + turno.getFecha();
+    }
+
     // ===== Listas para los desplegables del formulario =====
     private void cargarListasFormulario(Model model, Turno turno) {
         model.addAttribute("pacientes", pacienteRepository.findByActivoTrueOrderByApellidoAscNombreAsc());   // solo activos (RN-05)

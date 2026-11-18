@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import com.dentora.dentora.model.Turno;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -98,6 +99,35 @@ public class PacienteController {
         cargarCatalogos(model);
         return "paciente-form";   // el MISMO formulario del alta
     }
+    // ===== NUEVO: turnos de un paciente (próximos e historial) =====
+    @GetMapping("/pacientes/{id}/turnos")
+    public String turnosDelPaciente(@PathVariable Integer id, Model model) {
+        Paciente paciente = pacienteRepository.findById(id).orElse(null);
+        if (paciente == null) {
+            return "redirect:/pacientes";
+        }
+
+        List<Turno> todos = turnoRepository.findByPacienteOrderByFechaDescHoraDesc(paciente);
+
+        // Próximos: Pendientes que todavía no empezaron, del más cercano al más lejano
+        List<Turno> proximos = todos.stream()
+                .filter(t -> t.getEstado().getNombre().equals("Pendiente") && !t.isComenzado())
+                .sorted((a, b) -> a.getFecha().equals(b.getFecha())
+                        ? a.getHora().compareTo(b.getHora())
+                        : a.getFecha().compareTo(b.getFecha()))
+                .toList();
+
+        // Historial: todos los demás (ya pasaron o no están pendientes), del más nuevo al más viejo
+        List<Turno> historial = todos.stream()
+                .filter(t -> !proximos.contains(t))
+                .toList();
+
+        model.addAttribute("paciente", paciente);
+        model.addAttribute("proximos", proximos);
+        model.addAttribute("historial", historial);
+        return "paciente-turnos";
+    }
+
     // ===== GUARDAR: alta y edición (pasos 6 a 10) =====
     // Sin id → save() hace INSERT (nuevo). Con id → save() hace UPDATE (modifica).
     @PostMapping("/pacientes/guardar")
