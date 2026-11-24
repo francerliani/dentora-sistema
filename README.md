@@ -5,7 +5,7 @@ Sistema web para la gestión de un consultorio odontológico: pacientes, agenda 
 Proyecto final de **Práctica Profesionalizante II** — Tecnicatura Superior en Desarrollo de Software, Instituto Superior ICOP (Santa Fe, Argentina).
 Autor: **Francisco Cerliani**
 
-![Odontograma](docs/capturas/README_dentora/odontograma.png)
+![Odontograma](docs/capturas/README_dentora/docs/capturas/agenda.png)
 
 ---
 
