@@ -5,7 +5,7 @@ Sistema web para la gestión de un consultorio odontológico: pacientes, agenda 
 Proyecto final de **Práctica Profesionalizante II** — Tecnicatura Superior en Desarrollo de Software, Instituto Superior ICOP (Santa Fe, Argentina).
 Autor: **Francisco Cerliani**
 
-![Odontograma](docs/capturas/README_dentora/docs/capturas/agenda.png)
+![Odontograma](README_dentora/docs/capturas/odontograma.png)
 
 ---
 
@@ -43,15 +43,15 @@ Autor: **Francisco Cerliani**
 
 | Agenda de turnos | Historial clínico |
 |---|---|
-| ![Agenda](docs/capturas/agenda.png) | ![Historial](docs/capturas/historial.png) |
+| ![Agenda](README_dentora/docs/capturas/agenda.png) | ![Historial](README_dentora/docs/capturas/historial.png) |
 
 | Pacientes | Turnos del paciente |
 |---|---|
-| ![Pacientes](docs/capturas/pacientes.png) | ![Turnos del paciente](docs/capturas/turnos-paciente.png) |
+| ![Pacientes](README_dentora/docs/capturas/pacientes.png) | ![Turnos del paciente](README_dentora/docs/capturas/turnos-paciente.png) |
 
 | Inicio del odontólogo | Reporte de facturación |
 |---|---|
-| ![Inicio](docs/capturas/inicio.png) | ![Reportes](docs/capturas/reportes.png) |
+| ![Inicio](README_dentora/docs/capturas/inicio.png) | ![Reportes](README_dentora/docs/capturas/reportes.png) |
 
 ---
 
